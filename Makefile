@@ -15,6 +15,9 @@ APP_VERSION := \
 XPI_FILE := $(APP_NAME)-$(APP_VERSION).xpi
 
 $(XPI_FILE): $(SOURCES)
-	zip $(XPI_FILE) $(SOURCES)
+	zip $@ $^
 
 all: $(XPI_FILE)
+
+clean:
+	rm $(XPI_FILE)
