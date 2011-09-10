@@ -12,6 +12,8 @@ APP_NAME := \
 APP_VERSION := \
 	${shell sed -n 's/.*<em:version>\([^<]*\)<\/em:version>.*/\1/p' < $(RDF)}
 
+FIREFOX_PATH = $(shell which firefox)
+
 XPI_FILE := $(APP_NAME)-$(APP_VERSION).xpi
 
 $(XPI_FILE): $(SOURCES)
@@ -21,3 +23,6 @@ all: $(XPI_FILE)
 
 clean:
 	rm $(XPI_FILE)
+
+run: $(XPI_FILE)
+	mozmill --addons=$< -b $(FIREFOX_PATH) --app-arg="-jsconsole"
