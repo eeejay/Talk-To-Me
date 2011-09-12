@@ -79,7 +79,8 @@ function printTree (acc, indent) {
 
 function DOMWalker(docRoot) {
     this.docRoot = docRoot;
-    this.currentNode = null;
+    // Be on the first relevant node.
+    this.currentNode = this._searchSubtreeDepth(docRoot, this._isItemOfInterest);
 }
 
 DOMWalker.prototype._isItemOfInterest = function (obj) {
@@ -109,47 +110,47 @@ DOMWalker.prototype._searchSubtreeDepth = function (obj, pred) {
     return null;
 }
 
-DOMWalker.prototype._getNextNode = function (node) {
+DOMWalker.prototype._nextNode = function (node, sibling) {
     var nextNode = node;
 
-    if (!nextNode)
-        return null;
+    while (nextNode)  {
+        try {
+            if (nextNode[sibling])
+                return nextNode[sibling];
+        } catch (e) {
+        }
 
-    while (!nextNode.nextSibling)  {
         nextNode = nextNode.parent;
-        if (!nextNode)
-            return null;
     }
 
-    return nextNode.nextSibling;
+    return null;
+}
+
+DOMWalker.prototype.prev = function () {
+    this._doWalk("previousSibling");
+    console.log("prev: "+ accToString(this.currentNode));
 }
 
 DOMWalker.prototype.next = function () {
-    var obj = null;
-    var nextNode = this._getNextNode(this.currentNode);
+    this._doWalk("nextSibling");
+    console.log("next: "+ accToString(this.currentNode));
+}
 
-    console.log ("currentNode: " + accToString(this.currentNode));
+DOMWalker.prototype._doWalk = function (sibling) {
+    var obj = null;
+    var nextNode = this._nextNode(this.currentNode, sibling);
 
     while (nextNode) {
-        console.log ("nextNode: " + accToString(nextNode));
         obj = this._searchSubtreeDepth(nextNode, this._isItemOfInterest);
 
         if (obj)
             break;
 
-        nextNode = this._getNextNode(nextNode);
+        nextNode = this._nextNode(nextNode, sibling);
     }
 
-    if (!obj) // Start from the start.
-        obj = this._searchSubtreeDepth(this.docRoot, this._isItemOfInterest);
-
-    console.log("next: "+ accToString(obj));
-
-    this.currentNode = obj;
-}
-
-DOMWalker.prototype.prev = function () {
-    console.log ("Previous item");
+    if (obj)
+        this.currentNode = obj;
 }
 
 init ();
@@ -164,6 +165,7 @@ addEventListener('keypress', function (e) {
             domWalker.next();
             break;
         case e.DOM_VK_UP:
+            console.log("---");
             domWalker.prev();
             break;
         default:
