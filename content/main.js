@@ -1,8 +1,7 @@
-dump("main.js\n");
-
 var TalkToMe = {
   onLoad : function(aEvent) {
-      window.messageManager.loadFrameScript(contents.url("content.js"), true);
+      window.messageManager.loadFrameScript("resource://talktome/content/content.js",
+                                            true);
   },
 
   onUIReady : function(aEvent) {

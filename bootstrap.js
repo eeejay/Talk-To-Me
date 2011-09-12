@@ -18,26 +18,20 @@ var windowListener = {
   onWindowTitleChange: function(aWindow, aTitle) { }
 };
 
-var contents = {
-    installPath: null,
-    ios: Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService),
-    url: function (fname) {
-        let p = this.installPath.clone();
-        p.append("content");
-        p.append(fname);
-        return this.ios.newFileURI(p).spec;
-    }
-}
-
 function loadIntoWindow (aWindow) {
-    let _globals = {window: aWindow,
-                    contents: contents};
-    loader.loadSubScript(contents.url("main.js"), _globals);
+    let _globals = {window: aWindow};
+    loader.loadSubScript("resource://talktome/content/main.js", _globals);
 }
 
 function startup (data, reason) {
-    dump ("started!");
-    contents.installPath = data.installPath;
+    dump ("started! " + data.id.substring(0, data.id.indexOf('@')) + "\n");
+
+    let ios = Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService)
+    let resource = ios.getProtocolHandler("resource").
+        QueryInterface(Ci.nsIResProtocolHandler);
+
+    let alias = ios.newFileURI(data.installPath);
+    resource.setSubstitution(data.id.substring(0, data.id.indexOf('@')), alias);
 
     let wm = Cc["@mozilla.org/appshell/window-mediator;1"]
         .getService(Ci.nsIWindowMediator);
@@ -54,3 +48,12 @@ function startup (data, reason) {
 }
 
 function install (data, reason) { }
+
+function shutdown (data, reason) {
+    if (aReason == APP_SHUTDOWN) return;
+
+    let ios = Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService)
+    let resource = ios.getProtocolHandler("resource").
+        QueryInterface(Ci.nsIResProtocolHandler);
+    resource.setSubstitution(data.id.substring(0, data.id.indexOf('@')), null);
+}
