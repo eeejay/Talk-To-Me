@@ -79,7 +79,7 @@ function printTree (acc, indent) {
 
 function DOMWalker(docRoot) {
     this.docRoot = docRoot;
-    this.currentNode = docRoot;
+    this.currentNode = null;
 }
 
 DOMWalker.prototype._isItemOfInterest = function (obj) {
@@ -109,23 +109,41 @@ DOMWalker.prototype._searchSubtreeDepth = function (obj, pred) {
     return null;
 }
 
-DOMWalker.prototype.next = function (currentNode) {
-    if (!currentNode)
-        currentNode = this.currentNode;
+DOMWalker.prototype._getNextNode = function (node) {
+    var nextNode = node;
 
-    console.log ("current: " + accToString(currentNode));
+    if (!nextNode)
+        return null;
 
-    var obj = this._searchSubtreeDepth(currentNode, this._isItemOfInterest);
-
-    if (obj == null || obj == this.currentNode)
-        obj = this._searchSubtreeDepth(currentNode.nextSibling, this._isItemOfInterest);
-    if (obj == null) {
-        console.log ("going up one");
-        this.next(currentNode.parent);
-        return;
+    while (!nextNode.nextSibling)  {
+        nextNode = nextNode.parent;
+        if (!nextNode)
+            return null;
     }
 
-    console.log("NEXT: "+ accToString(obj));
+    return nextNode.nextSibling;
+}
+
+DOMWalker.prototype.next = function () {
+    var obj = null;
+    var nextNode = this._getNextNode(this.currentNode);
+
+    console.log ("currentNode: " + accToString(this.currentNode));
+
+    while (nextNode) {
+        console.log ("nextNode: " + accToString(nextNode));
+        obj = this._searchSubtreeDepth(nextNode, this._isItemOfInterest);
+
+        if (obj)
+            break;
+
+        nextNode = this._getNextNode(nextNode);
+    }
+
+    if (!obj) // Start from the start.
+        obj = this._searchSubtreeDepth(this.docRoot, this._isItemOfInterest);
+
+    console.log("next: "+ accToString(obj));
 
     this.currentNode = obj;
 }
@@ -142,6 +160,7 @@ addEventListener('keypress', function (e) {
     if (e.altKey) {
         switch (e.keyCode) {
         case e.DOM_VK_DOWN:
+            console.log("---");
             domWalker.next();
             break;
         case e.DOM_VK_UP:
