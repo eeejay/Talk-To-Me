@@ -1,7 +1,7 @@
 var TalkToMe = {
   onLoad : function(aEvent) {
-      window.messageManager.loadFrameScript("resource://talktome/content/content.js",
-                                            true);
+      window.messageManager.loadFrameScript(
+          "resource://talktome/content/content-script.js", true);
   },
 
   onUIReady : function(aEvent) {
