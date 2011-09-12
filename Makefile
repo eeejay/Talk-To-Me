@@ -1,11 +1,11 @@
 RDF = install.rdf
-# APP_NAME := ${shell perl -ne 'm/<em:id>(.*?)@.*?<\/em:id>/ && print $1' < $(RDF)}
+
+CONTENT_SOURCES = $(shell ls content/*.{js,jsm})
 
 SOURCES = \
-	$(RDF) \
 	bootstrap.js \
-	content/main.js \
-	content/content.js
+	$(RDF) \
+	$(CONTENT_SOURCES)
 
 APP_NAME := \
 	${shell sed -n 's/.*<em:id>\([^<]*\)@.*<\/em:id>.*/\1/p' < $(RDF)}
