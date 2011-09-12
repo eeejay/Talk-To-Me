@@ -84,7 +84,8 @@ function DOMWalker(docRoot) {
 }
 
 DOMWalker.prototype._isItemOfInterest = function (obj) {
-    return (obj.role == Ci.nsIAccessibleRole.ROLE_LINK);
+    return (obj.role == Ci.nsIAccessibleRole.ROLE_TEXT_LEAF ||
+            obj.role == Ci.nsIAccessibleRole.ROLE_GRAPHIC);
 }
 
 DOMWalker.prototype._searchSubtreeDepth = function (obj, pred) {
