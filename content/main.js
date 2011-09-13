@@ -1,14 +1,22 @@
+Components.utils.import("resource://talktome/content/console.js");
+
 var TalkToMe = {
-  onLoad : function(aEvent) {
-      window.messageManager.loadFrameScript(
-          "resource://talktome/content/content-script.js", true);
-  },
+    onLoad : function(aEvent) {
+        window.messageManager.loadFrameScript(
+            "resource://talktome/content/content-script.js", true);
+        window.messageManager.addMessageListener("TalkToMe:Speak", this);
+    },
 
-  onUIReady : function(aEvent) {
-  },
+    onUIReady : function(aEvent) {
+    },
 
-  onUIReadyDelayed : function(aEvent) {
-  }
+    onUIReadyDelayed : function(aEvent) {
+    },
+
+    receiveMessage: function(aMessage) {
+        let phrase = aMessage.json.phrase;
+        console.log ("SPEAK: " + phrase);
+    }
 };
 
 // Setup the main event listeners

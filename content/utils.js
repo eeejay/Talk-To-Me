@@ -1,4 +1,5 @@
-var EXPORTED_SYMBOLS = ["gAccRetrieval", "accToString", "getAccessible", "printTree"];
+var EXPORTED_SYMBOLS = ["gAccRetrieval", "accToString", "getAccessible", "printTree",
+                        "accToPhrase"];
 
 Components.utils.import("resource://talktome/content/console.js");
 
@@ -7,6 +8,29 @@ var Ci = Components.interfaces;
 
 var gAccRetrieval = Cc["@mozilla.org/accessibleRetrieval;1"]
     .getService(Ci.nsIAccessibleRetrieval);
+
+var _interestingRoles = [Ci.nsIAccessibleRole.ROLE_PUSHBUTTON,
+                         Ci.nsIAccessibleRole.ROLE_GRAPHIC,
+                         Ci.nsIAccessibleRole.ROLE_LINK];
+
+function accToPhrase (acc) {
+    if (!acc) // Grave error
+        return "";
+
+    let accOfInterest = acc;
+    let phrase = acc.name;
+
+    while (accOfInterest) {
+        if (_interestingRoles.indexOf(accOfInterest.role) >= 0)
+            break;
+        accOfInterest = accOfInterest.parent;
+    }
+
+    if (accOfInterest)
+        phrase += " " + gAccRetrieval.getStringRole(accOfInterest.role);
+
+    return phrase;
+}
 
 function accToString (acc) {
     if (!acc)

@@ -12,7 +12,8 @@ function DOMWalker(docRoot) {
 }
 
 DOMWalker.prototype._isItemOfInterest = function (obj) {
-    return (obj.role == Ci.nsIAccessibleRole.ROLE_TEXT_LEAF ||
+    return (obj.name && obj.name.trim() &&
+            obj.role == Ci.nsIAccessibleRole.ROLE_TEXT_LEAF ||
             obj.role == Ci.nsIAccessibleRole.ROLE_GRAPHIC);
 }
 
