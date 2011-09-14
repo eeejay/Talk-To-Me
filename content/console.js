@@ -14,10 +14,21 @@ var console = {
             this._consoleService.logStringMessage(String(s));
     },
 
-    dumpObj: function (obj) {
+    _toString: function (obj) {
+        if (obj === null) 
+            return "null";
+        else if (obj.call)
+            return "[ function ]";
+        else
+            return String(obj);
+    },
+
+    dumpObj: function (obj, dump_const) {
         this.log(obj);
         for (var prop in obj) {
-            this.log(" " + prop + ": " + String(obj[prop]));
+            if (prop.toUpperCase() == prop && !dump_const) // Probably a constant
+                continue;
+            this.log(" " + prop + ": " + this._toString(obj[prop]));
         }
     }
 }
