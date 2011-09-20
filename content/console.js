@@ -1,3 +1,5 @@
+Components.utils.import("resource://gre/modules/ctypes.jsm")
+
 var EXPORTED_SYMBOLS = ["console"];
 
 var console = {
@@ -6,9 +8,12 @@ var console = {
     _do_dump: Components.classes["@mozilla.org/preferences-service;1"].
         getService(Components.interfaces.nsIPrefBranch).
         getBoolPref("browser.dom.window.dump.enabled"),
+    _android_log: null,
 
     log: function (s) {
-        if (this._do_dump)
+        if (this._android_log)
+            this._android_log(3, "TalkToMe", s);
+        else if (this._do_dump)
             dump (String(s) + '\n');
         else
             this._consoleService.logStringMessage(String(s));
@@ -31,4 +36,15 @@ var console = {
             this.log(" " + prop + ": " + this._toString(obj[prop]));
         }
     }
+}
+
+try {
+    liblog=ctypes.open('liblog.so');
+    console._android_log = liblog.declare("__android_log_write",
+                                          ctypes.default_abi,
+                                          ctypes.int32_t,
+                                          ctypes.int32_t,
+                                          ctypes.char.ptr,
+                                          ctypes.char.ptr);
+} catch (e) {
 }
