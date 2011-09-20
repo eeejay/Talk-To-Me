@@ -12,7 +12,7 @@ APP_NAME := \
 APP_VERSION := \
 	${shell sed -n 's/.*<em:version>\([^<]*\)<\/em:version>.*/\1/p' < $(RDF)}
 
-FIREFOX_PATH = $(shell which firefox)
+FIREFOX_PATH = $(shell which fennec)
 
 XPI_FILE := $(APP_NAME)-$(APP_VERSION).xpi
 
