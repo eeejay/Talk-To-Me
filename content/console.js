@@ -12,7 +12,7 @@ var console = {
 
     log: function (s) {
         if (this._android_log)
-            this._android_log(3, "TalkToMe", s);
+            this._android_log(3, "TalkToMe", String(s));
         else if (this._do_dump)
             dump (String(s) + '\n');
         else
