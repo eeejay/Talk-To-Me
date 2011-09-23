@@ -1,5 +1,14 @@
 Components.utils.import("resource://talktome/content/console.js");
 
+var tts = null;
+
+try {
+    Components.utils.import("resource://talktome/content/speech.js");
+    tts = new TextToSpeech();
+} catch (e) {
+    console.log("ERROR: " + e);
+}
+
 var TalkToMe = {
     onLoad : function(aEvent) {
         try {
@@ -71,6 +80,7 @@ var TalkToMe = {
     receiveMessage: function(aMessage) {
         let phrase = aMessage.json.phrase;
         console.log ("SPEAK: " + phrase);
+        tts.speak(phrase);
     }
 };
 
@@ -86,4 +96,3 @@ window.addEventListener("UIReady", function(e) {
 window.addEventListener("UIReadyDelayed", function(e) {
   TalkToMe.onUIReadyDelayed(e);
 }, false);
-
