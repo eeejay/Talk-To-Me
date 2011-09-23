@@ -79,7 +79,6 @@ var TalkToMe = {
 
     receiveMessage: function(aMessage) {
         let phrase = aMessage.json.phrase;
-        console.log ("SPEAK: " + phrase);
         tts.speak(phrase);
     }
 };
