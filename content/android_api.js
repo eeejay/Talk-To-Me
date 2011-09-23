@@ -388,20 +388,21 @@ function JavaObject (cls, args) {
     this.jcls = cls
 
     for (let attr in cls.iface.methods) {
-        this[attr] = function () {
-            let signature = cls.iface.methods[attr];
+        let _mname = attr;
+        this[_mname] = function () {
+            let signature = cls.iface.methods[_mname];
             let m = _java_sig_patt.exec(signature);
             let returntype = m[2];
-            let methodid = cls.env.GetMethodID(cls.jcls, attr, signature);
+            let methodid = cls.env.GetMethodID(cls.jcls, _mname, signature);
             let _args = [this.jobj, methodid];
             let _arg;
             let i = 0;
             while (_arg = _java_arg_patt.exec(m[1])) {
                 if (i >= arguments.length)
-                    throw attr + ": too many arguments";
+                    throw _mname + ": too many arguments";
 
                 if (_arg[0][0] == "[")
-                    throw attr + ": arrays are not supported yet";
+                    throw _mname + ": arrays are not supported yet";
 
                 if (_arg[0] == "Z" || _arg[0] == "C")
                     _args.push(ctypes.uint8_t(arguments[i]));
