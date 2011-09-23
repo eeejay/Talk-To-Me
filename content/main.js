@@ -1,14 +1,5 @@
 Components.utils.import("resource://talktome/content/console.js");
 
-var tts = null;
-
-try {
-    Components.utils.import("resource://talktome/content/speech.js");
-    tts = new TextToSpeech();
-} catch (e) {
-    console.log("ERROR: " + e);
-}
-
 var TalkToMe = {
     onLoad : function(aEvent) {
         try {

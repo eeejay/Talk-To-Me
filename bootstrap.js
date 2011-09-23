@@ -8,6 +8,8 @@ Cu.import("resource://gre/modules/Services.jsm");
 var loader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
     .getService(Ci.mozIJSSubScriptLoader);
 
+var tts = null;
+
 /* From http://starkravingfinkle.org/blog/2011/01/bootstrap-jones-adventures-in-restartless-add-ons/ */
 
 var windowListener = {
@@ -21,7 +23,7 @@ var windowListener = {
 };
 
 function loadIntoWindow (aWindow) {
-    let _globals = {window: aWindow};
+    let _globals = {window: aWindow, tts: tts};
     loader.loadSubScript("resource://talktome/content/main.js", _globals);
 }
 
@@ -33,6 +35,14 @@ function startup (data, reason) {
 
     let alias = Services.io.newFileURI(data.installPath);
     resource.setSubstitution(data.id.substring(0, data.id.indexOf('@')), alias);
+
+    try {
+        Cu.import("resource://talktome/content/speech.js");
+        tts = new TextToSpeech();
+    } catch (e) {
+        dump ("FAILED TO LOAD TTS: " + e + "\n");
+    }
+
 
     // Load into any existing windows
     let enumerator = Services.wm.getEnumerator("navigator:browser");
@@ -48,6 +58,7 @@ function startup (data, reason) {
 function install (data, reason) { }
 
 function shutdown (data, reason) {
+    tts.shutdown();
     if (aReason == APP_SHUTDOWN) return;
 
     let resource = Services.io.getProtocolHandler("resource").

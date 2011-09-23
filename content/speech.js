@@ -24,7 +24,8 @@ TextToSpeech.prototype._init_android = function() {
         {constructor: "(Landroid/content/Context;Landroid/speech/tts/TextToSpeech$OnInitListener;)V",
          methods: {
              speak: "(Ljava/lang/String;ILjava/util/HashMap;)I",
-             setPitch: "(F)I"
+             setPitch: "(F)I",
+             shutdown: "()V"
          }
         }
     );
@@ -59,6 +60,13 @@ TextToSpeech.prototype.setPitch = function (f) {
     }
 
     return true;
+}
+
+TextToSpeech.prototype.shutdown = function () {
+    console.log("shutdown");
+
+    if (this.jtts)
+        this.jtts.shutdown();
 }
 
 TextToSpeech.QUEUE_FLUSH = 0;
