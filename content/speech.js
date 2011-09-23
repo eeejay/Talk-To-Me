@@ -19,9 +19,15 @@ function TextToSpeech() {
 TextToSpeech.prototype._init_android = function() {
     this.jenv = new JavaEnvironment();
 
-    let tts = this.jenv.getClass("android/speech/tts/TextToSpeech",
-                                  {constructor: "(Landroid/content/Context;Landroid/speech/tts/TextToSpeech$OnInitListener;)V",
-                                   methods: {speak: "(Ljava/lang/String;ILjava/util/HashMap;)I"}});
+    let tts = this.jenv.getClass(
+        "android/speech/tts/TextToSpeech",
+        {constructor: "(Landroid/content/Context;Landroid/speech/tts/TextToSpeech$OnInitListener;)V",
+         methods: {
+             speak: "(Ljava/lang/String;ILjava/util/HashMap;)I",
+             setPitch: "(F)I"
+         }
+        }
+    );
 
     let app = this.jenv.getClass("org/mozilla/gecko/GeckoApp", {});
 
@@ -39,6 +45,16 @@ TextToSpeech.prototype.speak = function (s, queue) {
     if (this.jtts) {
         let ret = this.jtts.speak(s, 0, 0);
         console.log(ret);
+        return (ret == 0);
+    }
+
+    return true;
+}
+
+TextToSpeech.prototype.setPitch = function (f) {
+    console.log("setPitch: " + f);
+    if (this.jtts) {
+        let ret = this.jtts.setPitch(f);
         return (ret == 0);
     }
 
