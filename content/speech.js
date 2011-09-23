@@ -33,11 +33,17 @@ TextToSpeech.prototype._init_android = function() {
     this.jtts = tts.newObject(ctx, new ctypes.voidptr_t(0));
 }
 
-TextToSpeech.prototype.speak = function (s) {
-    console.log("SPEAK: " + s);
+TextToSpeech.prototype.speak = function (s, queue) {
+    let _queue = queue || TextToSpeech.QUEUE_FLUSH;
+    console.log("SPEAK: " + s + " queue: " + _queue);
     if (this.jtts) {
         let ret = this.jtts.speak(s, 0, 0);
-        if (ret != 0)
-            throw "Error in TextToSpeech.speak";
+        console.log(ret);
+        return (ret == 0);
     }
+
+    return true;
 }
+
+TextToSpeech.QUEUE_FLUSH = 0;
+TextToSpeech.QUEUE_ADD = 1;
