@@ -1,6 +1,6 @@
 RDF = install.rdf
 
-CONTENT_SOURCES = $(shell ls content/*.{js,jsm})
+CONTENT_SOURCES = $(shell ls content/*.js)
 
 SOURCES = \
 	bootstrap.js \
@@ -16,6 +16,10 @@ FIREFOX_PATH = $(shell which fennec)
 
 XPI_FILE := $(APP_NAME)-$(APP_VERSION).xpi
 
+ADB = /opt/android/android-sdk-linux_x86/platform-tools/adb
+ANDROID_PKG = org.mozilla.fennec_eitan
+ANDROID_LAUNCER = ./android_launcher.py --adb $(ADB) --pkg-name $(ANDROID_PKG)
+
 $(XPI_FILE): $(SOURCES)
 	zip $@ $^
 
@@ -26,3 +30,17 @@ clean:
 
 run: $(XPI_FILE)
 	mozmill --addons=$< -b $(FIREFOX_PATH) --app-arg="-jsconsole"
+
+install-android: $(SOURCES)
+	$(ANDROID_LAUNCER) command chmod 755 /data
+	$(ANDROID_LAUNCER) mkdirs /data/local/talktome/content
+	$(ADB) push $(RDF) /data/local/talktome
+	$(ADB) push bootstrap.js /data/local/talktome
+	for fname in $(CONTENT_SOURCES); do \
+		$(ADB) push $$fname /data/local/talktome/content; \
+	done
+
+run-android: install-android
+	$(ANDROID_LAUNCER) kill
+	$(ANDROID_LAUNCER) start
+
