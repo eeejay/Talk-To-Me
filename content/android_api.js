@@ -356,8 +356,14 @@ function JavaEnvironment(javaenv) {
     else
         this._javaenv = GetJNIForThread();
 
-    let jenv = this._javaenv.contents.contents;
+    this.jenv = this._javaenv.contents.contents;
 
+    this._bindFunctions ();
+
+    this.app_ctx = this._getAppContext ();
+}
+
+JavaEnvironment.prototype._bindFunctions = function () {
     for (let i in JNINativeInterface.fields) {
         for (let attr in JNINativeInterface.fields[i]) {
             let field = JNINativeInterface.fields[i][attr];
@@ -366,11 +372,22 @@ function JavaEnvironment(javaenv) {
                 this[fname] = function () {
                     let _args = [this._javaenv]
                     _args.push.apply(_args, arguments);
-                    return _apply(jenv[fname], _args);
+                    return _apply(this.jenv[fname], _args);
                 }
             }
         }
     }
+}
+
+
+JavaEnvironment.prototype._getAppContext = function () {
+    this.pushFrame();
+    let app = this.getClass("org/mozilla/gecko/GeckoApp", {});
+    let fid = this.GetStaticFieldID(app.jcls, "mAppContext",
+                                         "Lorg/mozilla/gecko/GeckoApp;");
+    let ctx = this.GetStaticObjectField(app.jcls, fid);
+    this.popFrame(ctx);
+    return ctx;
 }
 
 JavaEnvironment.prototype.getClass = function(name, iface) {

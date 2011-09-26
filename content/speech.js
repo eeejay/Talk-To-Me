@@ -33,14 +33,7 @@ TextToSpeech.prototype._get_android_tts = function () {
         }
     );
 
-    let app = this.jenv.getClass("org/mozilla/gecko/GeckoApp", {});
-
-    let fid = this.jenv.GetStaticFieldID(app.jcls, "mAppContext",
-                                         "Lorg/mozilla/gecko/GeckoApp;");
-
-    let ctx = this.jenv.GetStaticObjectField(app.jcls, fid);
-
-    let android_tts = tts.newObject(ctx, new ctypes.voidptr_t(0));
+    let android_tts = tts.newObject(this.jenv.app_ctx, new ctypes.voidptr_t(0));
 
     this.jenv.popFrame(android_tts.jobj);
 
