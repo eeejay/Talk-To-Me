@@ -36,11 +36,13 @@ function startup (data, reason) {
     let alias = Services.io.newFileURI(data.installPath);
     resource.setSubstitution(data.id.substring(0, data.id.indexOf('@')), alias);
 
+    Cu.import("resource://talktome/content/console.js");
+
     try {
         Cu.import("resource://talktome/content/speech.js");
         tts = new TextToSpeech();
     } catch (e) {
-        dump ("FAILED TO LOAD TTS: " + e + "\n");
+        console.log ("FAILED TO LOAD TTS: " + e + "\n");
     }
 
 
