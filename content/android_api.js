@@ -11,6 +11,8 @@ var jvalue = ctypes.voidptr_t;
 var jmethodid = ctypes.voidptr_t;
 var jfieldid = ctypes.voidptr_t;
 
+const N_REFS = 16;
+
 var JNINativeInterface = new ctypes.StructType(
     "JNINativeInterface",
     [{reserved0: ctypes.voidptr_t},
@@ -38,10 +40,22 @@ var JNINativeInterface = new ctypes.StructType(
      {ExceptionDescribe: ctypes.voidptr_t},
      {ExceptionClear: ctypes.voidptr_t},
      {FatalError: ctypes.voidptr_t},
-     {PushLocalFrame: ctypes.voidptr_t},
-     {PopLocalFrame: ctypes.voidptr_t},
-     {NewGlobalRef: ctypes.voidptr_t},
-     {DeleteGlobalRef: ctypes.voidptr_t},
+     {PushLocalFrame: new ctypes.FunctionType(ctypes.default_abi,
+                                              ctypes.int32_t,
+                                              [ctypes.voidptr_t,
+                                               ctypes.int32_t]).ptr},
+     {PopLocalFrame: new ctypes.FunctionType(ctypes.default_abi,
+                                             ctypes.int32_t,
+                                             [ctypes.voidptr_t,
+                                              jobject]).ptr},
+     {NewGlobalRef: new ctypes.FunctionType(ctypes.default_abi,
+                                            jobject,
+                                            [ctypes.voidptr_t,
+                                             jobject]).ptr},
+     {DeleteGlobalRef: new ctypes.FunctionType(ctypes.default_abi,
+                                               ctypes.void_t,
+                                               [ctypes.voidptr_t,
+                                                jobject]).ptr},
      {DeleteLocalRef: new ctypes.FunctionType(ctypes.default_abi,
                                          ctypes.void_t,
                                          [ctypes.voidptr_t,
@@ -58,7 +72,10 @@ var JNINativeInterface = new ctypes.StructType(
                                           "..."]).ptr},
      {NewObjectV: ctypes.voidptr_t},
      {NewObjectA: ctypes.voidptr_t},
-     {GetObjectClass: ctypes.voidptr_t},
+     {GetObjectClass: new ctypes.FunctionType(ctypes.default_abi,
+                                              jclass,
+                                              [ctypes.voidptr_t,
+                                               jobject]).ptr},
      {IsInstanceOf: ctypes.voidptr_t},
      {GetMethodID: new ctypes.FunctionType(ctypes.default_abi,
                                            jmethodid,
@@ -360,6 +377,14 @@ JavaEnvironment.prototype.getClass = function(name, iface) {
     return new JavaClass(this, name, iface);
 }
 
+JavaEnvironment.prototype.pushFrame = function() {
+    return (this.PushLocalFrame(ctypes.int32_t(N_REFS)) == 0);
+}
+
+JavaEnvironment.prototype.popFrame = function(ref) {
+    return (this.PopLocalFrame(ref || ctypes.voidptr_t(0)) == 0);
+}
+
 function JavaClass(env, name, iface) {
     this.iface = iface;
     this.env = env;
@@ -385,15 +410,18 @@ function JavaObject (cls, args) {
     let _args = [cls.jcls, methodid];
     _args.push.apply(_args, args);
     this.jobj = cls.env.NewObject.apply(cls.env, _args);
-    this.jcls = cls
+    this.env = cls.env;
+    this.iface = cls.iface;
 
-    for (let attr in cls.iface.methods) {
+    for (let attr in this.iface.methods) {
         let _mname = attr;
         this[_mname] = function () {
-            let signature = cls.iface.methods[_mname];
+
+            let signature = this.iface.methods[_mname];
             let m = _java_sig_patt.exec(signature);
             let returntype = m[2];
-            let methodid = cls.env.GetMethodID(cls.jcls, _mname, signature);
+            let jcls = this.env.GetObjectClass(this.jobj);
+            let methodid = this.env.GetMethodID(jcls, _mname, signature);
             let _args = [this.jobj, methodid];
             let _arg;
             let i = 0;
@@ -403,6 +431,8 @@ function JavaObject (cls, args) {
 
                 if (_arg[0][0] == "[")
                     throw _mname + ": arrays are not supported yet";
+
+                this.env.pushFrame();
 
                 if (_arg[0] == "Z" || _arg[0] == "C")
                     _args.push(ctypes.uint8_t(arguments[i]));
@@ -419,17 +449,20 @@ function JavaObject (cls, args) {
                 else if (_arg[0] == "D")
                     _args.push(ctypes.float64_t(arguments[i]));
                 else if (_arg[0] == "Ljava/lang/String;")
-                    _args.push(cls.env.NewStringUTF(arguments[i]));
+                    _args.push(this.env.NewStringUTF(arguments[i]));
                 else
                     _args.push(ctypes.voidptr_t(arguments[i]));
                 i++;
             }
 
-            return cls.env[_returntypes[returntype]].apply(cls.env, _args);
+            let rv = this.env[_returntypes[returntype]].apply(this.env, _args);
+
+            if (returntype[0] = 'L')
+                this.env.popFrame(rv);
+            else
+                this.env.popFrame(0);
+
+            return rv;
         }
     }
-}
-
-JavaObject.unref = function () {
-    this.jcls.env.DeleteLocalRef (this.jobj);
 }

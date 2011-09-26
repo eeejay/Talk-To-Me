@@ -8,16 +8,19 @@ var using_android = true;
 try {
     Components.utils.import("resource://talktome/content/android_api.js");
 } catch (e) {
+    console.log("Error loading android_api.js: " + e);
     using_android = false;
 }
 
 function TextToSpeech() {
     if (using_android)
-        this._init_android();
+        this.android_tts = this._get_android_tts();
 }
 
-TextToSpeech.prototype._init_android = function() {
+TextToSpeech.prototype._get_android_tts = function () {
     this.jenv = new JavaEnvironment();
+
+    this.jenv.pushFrame();
 
     let tts = this.jenv.getClass(
         "android/speech/tts/TextToSpeech",
@@ -37,14 +40,18 @@ TextToSpeech.prototype._init_android = function() {
 
     let ctx = this.jenv.GetStaticObjectField(app.jcls, fid);
 
-    this.jtts = tts.newObject(ctx, new ctypes.voidptr_t(0));
+    let android_tts = tts.newObject(ctx, new ctypes.voidptr_t(0));
+
+    this.jenv.popFrame(android_tts.jobj);
+
+    return android_tts;
 }
 
 TextToSpeech.prototype.speak = function (s, queue) {
     let _queue = queue || TextToSpeech.QUEUE_FLUSH;
     console.log("SPEAK: " + s + " queue: " + _queue);
-    if (this.jtts) {
-        let ret = this.jtts.speak(s, 0, 0);
+    if (this.android_tts) {
+        let ret = this.android_tts.speak(s, 0, 0);
         console.log(ret);
         return (ret == 0);
     }
@@ -54,8 +61,8 @@ TextToSpeech.prototype.speak = function (s, queue) {
 
 TextToSpeech.prototype.setPitch = function (f) {
     console.log("setPitch: " + f);
-    if (this.jtts) {
-        let ret = this.jtts.setPitch(f);
+    if (this.android_tts) {
+        let ret = this.android_tts.setPitch(f);
         return (ret == 0);
     }
 
@@ -65,8 +72,8 @@ TextToSpeech.prototype.setPitch = function (f) {
 TextToSpeech.prototype.shutdown = function () {
     console.log("shutdown");
 
-    if (this.jtts)
-        this.jtts.shutdown();
+    if (this.android_tts)
+        this.android_tts.shutdown();
 }
 
 TextToSpeech.QUEUE_FLUSH = 0;
