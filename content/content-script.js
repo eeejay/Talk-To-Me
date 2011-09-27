@@ -11,29 +11,6 @@ var domWalker = null;
 
 console.log("content-script.js");
 
-addEventListener('keypress', function (e) {
-    if (e.altKey) {
-        switch (e.keyCode) {
-        case e.DOM_VK_DOWN:
-            console.log("---");
-            domWalker.next();
-            sendAsyncMessage("TalkToMe:Speak",
-                             { phrase: accToPhrase(domWalker.currentNode),
-                               bounds: accToRect(domWalker.currentNode)});
-            break;
-        case e.DOM_VK_UP:
-            console.log("---");
-            domWalker.prev();
-            sendAsyncMessage("TalkToMe:Speak",
-                             { phrase: accToPhrase(domWalker.currentNode),
-                               bounds: accToRect(domWalker.currentNode)});
-            break;
-        default:
-            break;
-        }
-    }
-});
-
 addEventListener('DOMContentLoaded', function (e) {
     console.log(content.document.title);
     console.log(content.document.body instanceof Ci.nsIDOMNode);
@@ -53,6 +30,6 @@ addMessageListener("TalkToMe:Navigate", function (message) {
         return;
 
     sendAsyncMessage("TalkToMe:Speak",
-                     { phrase: accToPhrase(domWalker.currentNode) });
-        
+                     { phrase: accToPhrase(domWalker.currentNode),
+                       bounds: accToRect(domWalker.currentNode)});
 });

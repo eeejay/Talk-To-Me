@@ -42,16 +42,15 @@ var TalkToMe = {
         var gmpHandleEvent = gmp.handleEvent;
 
         gmp.handleEvent = function wrapped_handleEvent (e) {
+            let mm = window.Browser.selectedTab.browser.messageManager
             if (e.type == "MozSwipeGesture") {
                 switch (e.direction) {
                 case e.DIRECTION_RIGHT:
-                    window.messageManager.sendAsyncMessage("TalkToMe:Navigate",
-                                                           { direction : "next" });
+                    mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "next" });
                     console.log ("next");
                     break;
                 case e.DIRECTION_LEFT:
-                    window.messageManager.sendAsyncMessage("TalkToMe:Navigate",
-                                                           { direction : "prev" });
+                    mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "prev" });
                     console.log ("prev");
                     break;
                 default:
@@ -74,9 +73,7 @@ var TalkToMe = {
             this._highlight_canvas.style.pointerEvents = "none";
             this._highlight_canvas.width = document.documentElement.width;
             this._highlight_canvas.height = document.documentElement.height;
-            stack.appendChild(this._highlight_canvas);
-
-            let ctx = canvas.getContext("2d");
+            stack.appendChild(this._highlight_canvas);            
         } catch (e) {
             console.log("Error adding highlighter: " + e);
         }
@@ -86,29 +83,33 @@ var TalkToMe = {
     },
 
     receiveMessage: function(aMessage) {
-        let phrase = aMessage.json.phrase;
-        let bounds = aMessage.json.bounds;
-        tts.speak(phrase);
+        try {
+            let phrase = aMessage.json.phrase;
+            let bounds = aMessage.json.bounds;
 
-        let ctx = this._highlight_canvas.getContext("2d");
+            tts.speak(phrase);
 
-        // clear it
-        ctx.clearRect(0, 0,
-                      this._highlight_canvas.width,
-                      this._highlight_canvas.height);
+            let ctx = this._highlight_canvas.getContext("2d");
 
-        ctx.strokeStyle = 'rgba(20, 20, 20, 0.8)'; 
-        ctx.lineWidth = 2;
+            // clear it
+            ctx.clearRect(0, 0,
+                          this._highlight_canvas.width,
+                          this._highlight_canvas.height);
 
-        // translate coords
-        let c = window.Browser.selectedTab.browser.transformBrowserToClient(
-            bounds.x, bounds.y);
+            ctx.strokeStyle = 'rgba(20, 20, 20, 0.8)'; 
+            ctx.lineWidth = 2;
 
-        let r = window.Browser.selectedTab.browser.transformBrowserToClient(
-            bounds.x + bounds.w, bounds.y + bounds.h);
-        
+            // translate coords
+            let c = window.Browser.selectedTab.browser.transformBrowserToClient(
+                bounds.x, bounds.y);
 
-        this._roundedRect(ctx, c.x, c.y, r.x - c.x, r.y - c.y, 4);
+            let r = window.Browser.selectedTab.browser.transformBrowserToClient(
+                bounds.x + bounds.w, bounds.y + bounds.h);
+
+            this._roundedRect(ctx, c.x, c.y, r.x - c.x, r.y - c.y, 4);
+        } catch (e) {
+            console.log("Error presenting: " + e);
+        }
     },
 
     // From https://developer.mozilla.org/en/Canvas_tutorial/Drawing_shapes
@@ -124,6 +125,24 @@ var TalkToMe = {
         ctx.lineTo(x+radius,y);  
         ctx.quadraticCurveTo(x,y,x,y+radius);  
         ctx.stroke();  
+    },
+
+    onKeyPress: function (e) {
+        if (e.altKey) {
+            let mm = window.Browser.selectedTab.browser.messageManager
+            switch (e.keyCode) {
+            case e.DOM_VK_DOWN:
+                mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "next" });
+                console.log ("next");
+                break;
+            case e.DOM_VK_UP:
+                mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "prev" });
+                console.log ("prev");
+                break;
+            default:
+                break;
+            }
+        }
     }
 };
 
@@ -138,4 +157,8 @@ window.addEventListener("UIReady", function(e) {
 
 window.addEventListener("UIReadyDelayed", function(e) {
   TalkToMe.onUIReadyDelayed(e);
+}, false);
+
+window.addEventListener('keypress', function (e) {
+    TalkToMe.onKeyPress(e);
 }, false);
