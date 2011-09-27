@@ -1,6 +1,8 @@
 Components.utils.import("resource://talktome/content/console.js");
 
 var TalkToMe = {
+    _highlight_canvas: null,
+
     onLoad : function(aEvent) {
         try {
             this._wrapGestureModule ();
@@ -63,6 +65,21 @@ var TalkToMe = {
     },
 
     onUIReady : function(aEvent) {
+        try {
+            let document = window.document;
+            let stack = window.document.getElementById('stack');
+
+            this._highlight_canvas = document.createElementNS(
+                "http://www.w3.org/1999/xhtml", "canvas");
+            this._highlight_canvas.style.pointerEvents = "none";
+            this._highlight_canvas.width = document.documentElement.width;
+            this._highlight_canvas.height = document.documentElement.height;
+            stack.appendChild(this._highlight_canvas);
+
+            let ctx = canvas.getContext("2d");
+        } catch (e) {
+            console.log("Error adding highlighter: " + e);
+        }
     },
 
     onUIReadyDelayed : function(aEvent) {
@@ -70,7 +87,43 @@ var TalkToMe = {
 
     receiveMessage: function(aMessage) {
         let phrase = aMessage.json.phrase;
+        let bounds = aMessage.json.bounds;
         tts.speak(phrase);
+
+        let ctx = this._highlight_canvas.getContext("2d");
+
+        // clear it
+        ctx.clearRect(0, 0,
+                      this._highlight_canvas.width,
+                      this._highlight_canvas.height);
+
+        ctx.strokeStyle = 'rgba(20, 20, 20, 0.8)'; 
+        ctx.lineWidth = 2;
+
+        // translate coords
+        let c = window.Browser.selectedTab.browser.transformBrowserToClient(
+            bounds.x, bounds.y);
+
+        let r = window.Browser.selectedTab.browser.transformBrowserToClient(
+            bounds.x + bounds.w, bounds.y + bounds.h);
+        
+
+        this._roundedRect(ctx, c.x, c.y, r.x - c.x, r.y - c.y, 4);
+    },
+
+    // From https://developer.mozilla.org/en/Canvas_tutorial/Drawing_shapes
+    _roundedRect: function (ctx,x,y,width,height,radius){  
+        ctx.beginPath();  
+        ctx.moveTo(x,y+radius);  
+        ctx.lineTo(x,y+height-radius);  
+        ctx.quadraticCurveTo(x,y+height,x+radius,y+height);  
+        ctx.lineTo(x+width-radius,y+height);  
+        ctx.quadraticCurveTo(x+width,y+height,x+width,y+height-radius);  
+        ctx.lineTo(x+width,y+radius);  
+        ctx.quadraticCurveTo(x+width,y,x+width-radius,y);  
+        ctx.lineTo(x+radius,y);  
+        ctx.quadraticCurveTo(x,y,x,y+radius);  
+        ctx.stroke();  
     }
 };
 
