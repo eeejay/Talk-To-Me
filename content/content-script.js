@@ -18,13 +18,15 @@ addEventListener('keypress', function (e) {
             console.log("---");
             domWalker.next();
             sendAsyncMessage("TalkToMe:Speak",
-                             { phrase: accToPhrase(domWalker.currentNode) });
+                             { phrase: accToPhrase(domWalker.currentNode),
+                               bounds: accToRect(domWalker.currentNode)});
             break;
         case e.DOM_VK_UP:
             console.log("---");
             domWalker.prev();
             sendAsyncMessage("TalkToMe:Speak",
-                             { phrase: accToPhrase(domWalker.currentNode) });
+                             { phrase: accToPhrase(domWalker.currentNode),
+                               bounds: accToRect(domWalker.currentNode)});
             break;
         default:
             break;

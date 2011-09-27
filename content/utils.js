@@ -1,5 +1,5 @@
 var EXPORTED_SYMBOLS = ["gAccRetrieval", "accToString", "getAccessible", "printTree",
-                        "accToPhrase"];
+                        "accToPhrase", "accToRect"];
 
 Components.utils.import("resource://talktome/content/console.js");
 
@@ -12,6 +12,19 @@ var gAccRetrieval = Cc["@mozilla.org/accessibleRetrieval;1"]
 var _interestingRoles = [Ci.nsIAccessibleRole.ROLE_PUSHBUTTON,
                          Ci.nsIAccessibleRole.ROLE_GRAPHIC,
                          Ci.nsIAccessibleRole.ROLE_LINK];
+
+function accToRect (acc) {
+    if (!acc) // Bady bad
+        return {x: 0, y: 0, w: 0, h: 0};
+
+    let x = {}, y = {}, w = {}, h = {};
+    acc.getBounds(x, y, w, h);
+    let rv = {x: x.value,
+              y: y.value,
+              w: w.value,
+              h: h.value};
+    return rv;
+}
 
 function accToPhrase (acc) {
     if (!acc) // Grave error
@@ -55,7 +68,7 @@ function printTree (acc, indent) {
     if (!indent)
         indent = 0;
 
-    var padding = "";        
+    var padding = "";   
     for (var i=0;i<indent;i++) {
         padding += " ";
     }
@@ -72,4 +85,3 @@ function printTree (acc, indent) {
         }
     }
 }
-
