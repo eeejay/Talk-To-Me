@@ -51,7 +51,19 @@ Console.prototype._toString = function (obj) {
         return String(obj);
 }
 
-Console.prototype.dumpObj = function (obj) {
+Console.prototype.dumpDOM = function (obj, indent) {
+    let _indent = indent || 0;
+    let _padding = "";   
+    for (let i=0;i<_indent;i++) {
+        _padding += " ";
+    }
+    this.log(_padding + obj + " " + obj.nodeName + " " + obj.id);
+    for (let i=0;i<obj.childNodes.length;i++) {
+        this.dumpDOM(obj.childNodes[i], _indent + 1);
+    }
+}
+
+Console.prototype.dumpObj = function (obj, dump_const) {
     this.log(obj);
     for (var prop in obj) {
         if (prop.toUpperCase() == prop && !dump_const) // Probably a constant
