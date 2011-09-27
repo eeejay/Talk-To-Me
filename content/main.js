@@ -89,31 +89,69 @@ var TalkToMe = {
 
             tts.speak(phrase);
 
-            let ctx = this._highlight_canvas.getContext("2d");
-
-            // clear it
-            ctx.clearRect(0, 0,
-                          this._highlight_canvas.width,
-                          this._highlight_canvas.height);
-
-            ctx.strokeStyle = 'rgba(20, 20, 20, 0.8)'; 
-            ctx.lineWidth = 2;
-
             // translate coords
-            let c = window.Browser.selectedTab.browser.transformBrowserToClient(
-                bounds.x, bounds.y);
 
-            let r = window.Browser.selectedTab.browser.transformBrowserToClient(
-                bounds.x + bounds.w, bounds.y + bounds.h);
+            let rect = this._transformContentRect(bounds.top, bounds.left,
+                                                  bounds.bottom, bounds.right);
 
-            this._roundedRect(ctx, c.x, c.y, r.x - c.x, r.y - c.y, 4);
+
+            let clipping = this._clip(rect);
+            let view = window.Browser.selectedTab.browser.getRootView();
+
+            let deltaX = clipping.left || clipping.right;
+            let deltaY = clipping.top || clipping.bottom;
+
+            view.scrollBy(Math.round(deltaX), Math.round(deltaY));
+
+            rect = this._transformContentRect(bounds.top, bounds.left,
+                                              bounds.bottom, bounds.right);
+
+            this._highlight(rect);
         } catch (e) {
             console.log("Error presenting: " + e);
         }
     },
 
+    _clip: function (rect) {
+        let bcr = window.Browser.selectedTab.browser.getBoundingClientRect();
+
+        return {left: ((rect.left >= bcr.left) ? 0 : rect.left - bcr.left),
+                top: ((rect.top >= bcr.top) ? 0 : rect.top - bcr.top),
+                right: ((rect.right <= bcr.right) ? 0 : rect.right - bcr.right),
+                bottom: ((rect.bottom <= bcr.bottom) ? 0 : rect.bottom - bcr.bottom)};
+    },
+
+    _transformContentRect: function (top, left, bottom, right) {
+        let t1 = window.Browser.selectedTab.browser.transformBrowserToClient(
+            left, top);
+        let t2 = window.Browser.selectedTab.browser.transformBrowserToClient(
+            right, bottom);
+
+        return { top: t1.y,
+                 left: t1.x,
+                 bottom: t2.y,
+                 right: t2.x };
+    },
+
     // From https://developer.mozilla.org/en/Canvas_tutorial/Drawing_shapes
-    _roundedRect: function (ctx,x,y,width,height,radius){  
+    _highlight: function (rect){
+        let ctx = this._highlight_canvas.getContext("2d");
+
+        // clear it
+        ctx.clearRect(0, 0,
+                      this._highlight_canvas.width,
+                      this._highlight_canvas.height);
+        
+        // Style it
+        ctx.strokeStyle = 'rgba(20, 20, 20, 0.8)'; 
+        ctx.lineWidth = 2;
+        const radius = 4;
+
+        let x = rect.left;
+        let y = rect.top;
+        let width = rect.right - rect.left;
+        let height = rect.bottom - rect.top;
+
         ctx.beginPath();  
         ctx.moveTo(x,y+radius);  
         ctx.lineTo(x,y+height-radius);  

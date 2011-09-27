@@ -31,5 +31,7 @@ addMessageListener("TalkToMe:Navigate", function (message) {
 
     sendAsyncMessage("TalkToMe:Speak",
                      { phrase: accToPhrase(domWalker.currentNode),
-                       bounds: accToRect(domWalker.currentNode)});
+                       bounds: accToRect(content.window.pageXOffset,
+                                         content.window.pageYOffset,
+                                         domWalker.currentNode)});
 });
