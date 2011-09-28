@@ -89,22 +89,28 @@ var TalkToMe = {
 
             tts.speak(phrase);
 
-            // translate coords
+            const padding = 4;
 
-            let rect = this._transformContentRect(bounds.top, bounds.left,
-                                                  bounds.bottom, bounds.right);
+            // translate coords
+            let rect = this._transformContentRect(bounds.top - padding,
+                                                  bounds.left - padding,
+                                                  bounds.bottom + padding,
+                                                  bounds.right + padding);
 
 
             let clipping = this._clip(rect);
-            let view = window.Browser.selectedTab.browser.getRootView();
 
-            let deltaX = clipping.left || clipping.right;
-            let deltaY = clipping.top || clipping.bottom;
+            if (clipping.top != 0 || clipping.left != 0 ||
+                clipping.bottom != 0 || clipping.right != 0) {
+                let view = window.Browser.selectedTab.browser.getRootView();
+                view.scrollBy(Math.round(clipping.left || clipping.right),
+                              Math.round(clipping.top || clipping.bottom));
 
-            view.scrollBy(Math.round(deltaX), Math.round(deltaY));
-
-            rect = this._transformContentRect(bounds.top, bounds.left,
-                                              bounds.bottom, bounds.right);
+                rect = this._transformContentRect(bounds.top - padding,
+                                                  bounds.left - padding,
+                                                  bounds.bottom + padding,
+                                                  bounds.right + padding);
+            }
 
             this._highlight(rect);
         } catch (e) {
@@ -115,10 +121,12 @@ var TalkToMe = {
     _clip: function (rect) {
         let bcr = window.Browser.selectedTab.browser.getBoundingClientRect();
 
-        return {left: ((rect.left >= bcr.left) ? 0 : rect.left - bcr.left),
-                top: ((rect.top >= bcr.top) ? 0 : rect.top - bcr.top),
-                right: ((rect.right <= bcr.right) ? 0 : rect.right - bcr.right),
-                bottom: ((rect.bottom <= bcr.bottom) ? 0 : rect.bottom - bcr.bottom)};
+        return {
+            left: ((rect.left >= bcr.left) ? 0 : rect.left - bcr.left),
+            top: ((rect.top >= bcr.top) ? 0 : rect.top - bcr.top),
+            right: ((rect.right <= bcr.right) ? 0 : rect.right - bcr.right),
+            bottom: ((rect.bottom <= bcr.bottom) ? 0 : rect.bottom - bcr.bottom)
+        };
     },
 
     _transformContentRect: function (top, left, bottom, right) {
