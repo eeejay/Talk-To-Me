@@ -12,9 +12,6 @@ var domWalker = null;
 console.log("content-script.js");
 
 addEventListener('DOMContentLoaded', function (e) {
-    console.log(content.document.title);
-    console.log(content.document.body instanceof Ci.nsIDOMNode);
-    console.log(content.document.title);
     var docAcc = gAccRetrieval.getAccessibleFor(content.document)
         .QueryInterface(Ci.nsIAccessible);
     domWalker = new DOMWalker(docAcc);
