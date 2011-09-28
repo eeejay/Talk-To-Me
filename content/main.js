@@ -48,11 +48,11 @@ var TalkToMe = {
                 case e.DIRECTION_RIGHT:
                     mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "next" });
                     console.log ("next");
-                    break;
+                    return;
                 case e.DIRECTION_LEFT:
                     mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "prev" });
                     console.log ("prev");
-                    break;
+                    return;
                 default:
                     break;
                 }
