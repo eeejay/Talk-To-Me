@@ -1,66 +1,20 @@
 Components.utils.import("resource://talktome/content/console.js");
 
+try {
+    Components.utils.import("resource://talktome/content/input_mangler.js");
+} catch (e) {
+    console.log("aah " + e);
+}
 var TalkToMe = {
     _highlight_canvas: null,
 
     onLoad : function(aEvent) {
-        try {
-            this._wrapGestureModule ();
-        } catch (e) {
-            console.log("ERROR: " + e);
-        }
+        this.input_mangler = new InputMangler(window);
+        this.input_mangler.enable();
+
         window.messageManager.loadFrameScript(
             "resource://talktome/content/content-script.js", true);
         window.messageManager.addMessageListener("TalkToMe:Speak", this);
-    },
-
-    _wrapMouseModule : function () {
-        var w = window.wrappedJSObject;
-        if (!w.MouseModule)
-            return;
-
-        /* borrowed from touching-is-good addon */
-
-        var mmp = w.MouseModule.prototype;
-        var mmpHandleEvent = mmp.handleEvent;
-
-        mmp.handleEvent = function wrapped_handleEvent (e) {
-            /* Could be useful one day... */
-            return mmpHandleEvent.apply(this, [e]);
-        }
-        
-    },
-
-    _wrapGestureModule : function () {
-        var w = window.wrappedJSObject;
-        if (!w.GestureModule)
-            return;
-
-        /* borrowed from touching-is-good addon */
-
-        var gmp = w.GestureModule.prototype;
-        var gmpHandleEvent = gmp.handleEvent;
-
-        gmp.handleEvent = function wrapped_handleEvent (e) {
-            let mm = window.Browser.selectedTab.browser.messageManager
-            if (e.type == "MozSwipeGesture") {
-                switch (e.direction) {
-                case e.DIRECTION_RIGHT:
-                    mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "next" });
-                    console.log ("next");
-                    return;
-                case e.DIRECTION_LEFT:
-                    mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "prev" });
-                    console.log ("prev");
-                    return;
-                default:
-                    break;
-                }
-            }
-
-            return gmpHandleEvent.apply(this, [e]);
-        }
-        
     },
 
     onUIReady : function(aEvent) {
@@ -171,30 +125,17 @@ var TalkToMe = {
         ctx.lineTo(x+radius,y);  
         ctx.quadraticCurveTo(x,y,x,y+radius);  
         ctx.stroke();  
-    },
-
-    onKeyPress: function (e) {
-        if (e.altKey) {
-            let mm = window.Browser.selectedTab.browser.messageManager
-            switch (e.keyCode) {
-            case e.DOM_VK_DOWN:
-                mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "next" });
-                console.log ("next");
-                break;
-            case e.DOM_VK_UP:
-                mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "prev" });
-                console.log ("prev");
-                break;
-            default:
-                break;
-            }
-        }
     }
 };
 
 // Setup the main event listeners
 window.addEventListener("load", function(e) {
-  TalkToMe.onLoad(e);
+    try {
+        console.log ("load");
+        TalkToMe.onLoad(e);
+    } catch (e) {
+        console.log ("Error::onLoad: " + e);
+    }
 }, false);
 
 window.addEventListener("UIReady", function(e) {
@@ -203,8 +144,4 @@ window.addEventListener("UIReady", function(e) {
 
 window.addEventListener("UIReadyDelayed", function(e) {
   TalkToMe.onUIReadyDelayed(e);
-}, false);
-
-window.addEventListener('keypress', function (e) {
-    TalkToMe.onKeyPress(e);
 }, false);
