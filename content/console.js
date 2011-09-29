@@ -63,10 +63,12 @@ Console.prototype.dumpDOM = function (obj, indent) {
     }
 }
 
-Console.prototype.dumpObj = function (obj, dump_const) {
+Console.prototype.dumpObj = function (obj, dump_const, ommit_empty) {
     this.log(obj);
     for (var prop in obj) {
         if (prop.toUpperCase() == prop && !dump_const) // Probably a constant
+            continue;
+        if ((obj[prop] == "" || obj[prop] == null) && ommit_empty)
             continue;
         this.log(" " + prop + ": " + this._toString(obj[prop]));
     }
