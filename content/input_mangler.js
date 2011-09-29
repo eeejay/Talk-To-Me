@@ -39,8 +39,9 @@ InputMangler.prototype.disable = function () {
 };
 
 InputMangler.prototype.mouseHandler = function (e) {
+    let rv = false;
     try {
-        let rv = InputMangler._mouseHandler(e);
+        rv = InputMangler._mouseHandler(e);
     } catch (e) {
         console.log("Error::mouseHandler: " + e);
     }
@@ -59,8 +60,9 @@ InputMangler._mouseHandler = function (e) {
 };
 
 InputMangler.prototype.gestureHandler = function (e) {
+    let rv = false;
     try {
-        let rv = InputMangler._gestureHandler(e);
+        rv = InputMangler._gestureHandler(e);
     } catch (e) {
         console.log("Error::gestureHandler: " + e);
     }
