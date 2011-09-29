@@ -38,6 +38,7 @@ var TalkToMe = {
             this._highlightRect.style.borderRadius = "4px";
             this._highlightRect.style.boxShadow = "1px 1px 1px #444";
             this._highlightRect.style.pointerEvents = "none";
+            this._highlightRect.style.display = "none";
             highlightLayer.appendChild(this._highlightRect);
 
             let inset = document.createElementNS(
@@ -118,11 +119,13 @@ var TalkToMe = {
     _highlight: function (rect){
         let border = 2;
 
+        this._highlightRect.style.display = "none";
         this._highlightRect.style.borderWidth = border + "px";
         this._highlightRect.style.top = (rect.top - border/2) + "px";
         this._highlightRect.style.left = (rect.left - border/2) + "px";
         this._highlightRect.style.width = (rect.right - rect.left - border) + "px";
         this._highlightRect.style.height = (rect.bottom - rect.top - border) + "px";
+        this._highlightRect.style.display = "block";
     }
 };
 
