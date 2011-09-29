@@ -15,7 +15,7 @@ addEventListener('DOMContentLoaded', function (e) {
     var docAcc = gAccRetrieval.getAccessibleFor(content.document)
         .QueryInterface(Ci.nsIAccessible);
     domWalker = new DOMWalker(docAcc);
-    printTree(docAcc);
+    //printTree(docAcc);
 });
 
 addMessageListener("TalkToMe:Navigate", function (message) {
