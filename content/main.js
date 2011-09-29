@@ -6,7 +6,7 @@ try {
     console.log("aah " + e);
 }
 var TalkToMe = {
-    _highlight_canvas: null,
+    _highlightRect: null,
 
     onLoad : function(aEvent) {
         this.input_mangler = new InputMangler(window);
@@ -22,12 +22,32 @@ var TalkToMe = {
             let document = window.document;
             let stack = window.document.getElementById('stack');
 
-            this._highlight_canvas = document.createElementNS(
-                "http://www.w3.org/1999/xhtml", "canvas");
-            this._highlight_canvas.style.pointerEvents = "none";
-            this._highlight_canvas.width = document.documentElement.width;
-            this._highlight_canvas.height = document.documentElement.height;
-            stack.appendChild(this._highlight_canvas);            
+
+            let highlightLayer = document.createElementNS(
+                "http://www.w3.org/1999/xhtml", "div");
+            highlightLayer.style.pointerEvents = "none";
+            highlightLayer.style.MozStackSizing = 'ignore';
+            highlightLayer.style.position = "relative";
+            stack.appendChild(highlightLayer);
+
+            this._highlightRect = document.createElementNS(
+                "http://www.w3.org/1999/xhtml", "div");
+            this._highlightRect.style.position = "absolute";
+            this._highlightRect.style.borderStyle = "solid";
+            this._highlightRect.style.borderColor = "orange";
+            this._highlightRect.style.borderRadius = "4px";
+            this._highlightRect.style.boxShadow = "1px 1px 1px #444";
+            this._highlightRect.style.pointerEvents = "none";
+            highlightLayer.appendChild(this._highlightRect);
+
+            let inset = document.createElementNS(
+                "http://www.w3.org/1999/xhtml", "div");
+            inset.style.width = "100%";
+            inset.style.height = "100%";
+            inset.style.borderRadius = "2px";
+            inset.style.boxShadow = "inset 1px 1px 1px #444";
+            this._highlightRect.appendChild(inset);
+
         } catch (e) {
             console.log("Error adding highlighter: " + e);
         }
@@ -95,36 +115,14 @@ var TalkToMe = {
                  right: t2.x };
     },
 
-    // From https://developer.mozilla.org/en/Canvas_tutorial/Drawing_shapes
     _highlight: function (rect){
-        let ctx = this._highlight_canvas.getContext("2d");
+        let border = 2;
 
-        // clear it
-        ctx.clearRect(0, 0,
-                      this._highlight_canvas.width,
-                      this._highlight_canvas.height);
-        
-        // Style it
-        ctx.strokeStyle = 'rgba(20, 20, 20, 0.8)'; 
-        ctx.lineWidth = 2;
-        const radius = 4;
-
-        let x = rect.left;
-        let y = rect.top;
-        let width = rect.right - rect.left;
-        let height = rect.bottom - rect.top;
-
-        ctx.beginPath();  
-        ctx.moveTo(x,y+radius);  
-        ctx.lineTo(x,y+height-radius);  
-        ctx.quadraticCurveTo(x,y+height,x+radius,y+height);  
-        ctx.lineTo(x+width-radius,y+height);  
-        ctx.quadraticCurveTo(x+width,y+height,x+width,y+height-radius);  
-        ctx.lineTo(x+width,y+radius);  
-        ctx.quadraticCurveTo(x+width,y,x+width-radius,y);  
-        ctx.lineTo(x+radius,y);  
-        ctx.quadraticCurveTo(x,y,x,y+radius);  
-        ctx.stroke();  
+        this._highlightRect.style.borderWidth = border + "px";
+        this._highlightRect.style.top = (rect.top - border/2) + "px";
+        this._highlightRect.style.left = (rect.left - border/2) + "px";
+        this._highlightRect.style.width = (rect.right - rect.left - border) + "px";
+        this._highlightRect.style.height = (rect.bottom - rect.top - border) + "px";
     }
 };
 
