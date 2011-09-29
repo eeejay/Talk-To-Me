@@ -100,7 +100,7 @@ var TalkToMe = {
             left: ((rect.left >= bcr.left) ? 0 : rect.left - bcr.left),
             top: ((rect.top >= bcr.top) ? 0 : rect.top - bcr.top),
             right: ((rect.right <= bcr.right) ? 0 : rect.right - bcr.right),
-            bottom: ((rect.bottom <= bcr.bottom) ? 0 : rect.bottom - bcr.bottom)
+            bottom: ((rect.bottom <= bcr.height) ? 0 : rect.bottom - bcr.height)
         };
     },
 
