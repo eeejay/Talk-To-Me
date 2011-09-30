@@ -7,8 +7,11 @@ var Ci = Components.interfaces;
 
 function DOMWalker(docRoot) {
     this.docRoot = docRoot;
+    var docAcc = gAccRetrieval.getAccessibleFor(docRoot)
+        .QueryInterface(Ci.nsIAccessible);
+
     // Be on the first relevant node.
-    this.currentNode = this._searchSubtreeDepth(docRoot, this._isItemOfInterest);
+    this.currentNode = this._searchSubtreeDepth(docAcc, this._isItemOfInterest);
 }
 
 DOMWalker.prototype._isItemOfInterest = function (obj) {
@@ -68,7 +71,14 @@ DOMWalker.prototype.next = function () {
 
 DOMWalker.prototype._doWalk = function (sibling) {
     var obj = null;
-    var nextNode = this._nextNode(this.currentNode, sibling);
+    var nextNode = null;
+
+    try {
+        nextNode = this._nextNode(this.currentNode, sibling);
+    } catch (e) {
+        nextNode = gAccRetrieval.getAccessibleFor(this.docRoot)
+            .QueryInterface(Ci.nsIAccessible);
+    }
 
     while (nextNode) {
         obj = this._searchSubtreeDepth(nextNode, this._isItemOfInterest);

@@ -28,9 +28,7 @@ addMessageListener("TalkToMe:Navigate", function (message) {
 });
 
 function contentLoadedHandler (e) {
-    var docAcc = gAccRetrieval.getAccessibleFor(content.document)
-        .QueryInterface(Ci.nsIAccessible);
-    domWalker = new DOMWalker(docAcc);
+    domWalker = new DOMWalker(content.document);
     if (domWalker.currentNode)
         sendAsyncMessage("TalkToMe:Speak",
                          { phrase: accToPhrase(domWalker.currentNode),
