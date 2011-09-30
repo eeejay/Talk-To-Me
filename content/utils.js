@@ -13,9 +13,24 @@ var _interestingRoles = [Ci.nsIAccessibleRole.ROLE_PUSHBUTTON,
                          Ci.nsIAccessibleRole.ROLE_GRAPHIC,
                          Ci.nsIAccessibleRole.ROLE_LINK];
 
-function accToRect (offsetx, offsety, acc) {
+function accToRect (offsetx, offsety, acc, islocal) {
     if (!acc) // Bady bad
         return {x: 0, y: 0, w: 0, h: 0};
+
+    if (islocal) {
+        acc.QueryInterface(Ci.nsIAccessNode);
+        let node = acc.DOMNode;
+
+        if (!node.getBoundingClientRect)
+            node = node.parentNode;
+
+        let rv = node.getBoundingClientRect();
+        
+        return {top: rv.top,
+                left: rv.left,
+                bottom: rv.bottom,
+                right: rv.right};
+    }
 
     let x = {}, y = {}, w = {}, h = {};
     acc.getBounds(x, y, w, h);

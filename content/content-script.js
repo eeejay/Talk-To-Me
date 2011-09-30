@@ -44,10 +44,14 @@ function navigateHandler(message) {
         domWalker.prev();
     else
         return;
-    
+
     sendAsyncMessage("TalkToMe:Speak",
                      { phrase: accToPhrase(domWalker.currentNode),
-                       bounds: accToRect(content.window.pageXOffset,
-                                         content.window.pageYOffset,
-                                         domWalker.currentNode)});
+                       bounds: accToRect(
+                           content.window.pageXOffset,
+                           content.window.pageYOffset,
+                           domWalker.currentNode,
+                           // TODO: must be a better way to know if we are local.
+                           (content.location == "about:home")) 
+                     });
 }
