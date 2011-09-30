@@ -51,6 +51,11 @@ InputMangler.prototype.mouseHandler = function (e) {
 };
 
 InputMangler._mouseHandler = function (e) {
+    if (!e.target.ownerDocument) {
+        console.warning("e.target.ownerDocument is null");
+        return false;
+    }
+
     let window = e.target.ownerDocument.defaultView;
     if (e.type == "mousedown" || e.type == "mousemove" || e.type == "mouseup" ||
         e.type == "click")
@@ -72,6 +77,11 @@ InputMangler.prototype.gestureHandler = function (e) {
 };
 
 InputMangler._gestureHandler = function (e) {
+    if (!e.target.ownerDocument) {
+        console.warning("e.target.ownerDocument is null");
+        return false;
+    }
+
     let window = e.target.ownerDocument.defaultView;
     let mm = window.Browser.selectedTab.browser.messageManager
 

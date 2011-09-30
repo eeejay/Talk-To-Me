@@ -83,4 +83,8 @@ Console.prototype.printException = function (exc) {
     }
 }
 
+Console.prototype.warning = function (s) {
+    this.log ("Warning::" +  arguments.callee.caller.name + ": " + s);
+}
+
 var console = new Console();
