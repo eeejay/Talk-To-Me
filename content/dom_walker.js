@@ -5,14 +5,42 @@ Components.utils.import("resource://talktome/content/console.js");
 
 var Ci = Components.interfaces;
 
-function DOMWalker(docRoot) {
-    this.docRoot = docRoot;
-    var docAcc = gAccRetrieval.getAccessibleFor(docRoot)
-        .QueryInterface(Ci.nsIAccessible);
+const STATE_BUSY = Ci.nsIAccessibleStates.STATE_BUSY;
 
-    // Be on the first relevant node.
-    this.currentNode = this._searchSubtreeDepth(docAcc, this._isItemOfInterest);
+function DOMWalker(content, newNodeFunc) {
+    this.newNodeFunc = newNodeFunc;
+    this.content = content;
+    this.docRoot = null;
+    this.currentNode = null;
+    this.getDocRoot (this.newNodeFunc);
 }
+
+// borrowed from a11y mochitests.
+DOMWalker.prototype.getDocRoot = function(onLoadFunc) {
+    function getDocRootClosure (domWalker, onLoadFunc) {
+        return function () {
+            try {
+                domWalker.docRoot = getAccessible(domWalker.content.document);
+
+                let state = {};
+                domWalker.docRoot.getState(state, {});
+                if (state.value & STATE_BUSY)
+                    return domWalker.getDocRoot (onLoadFunc); // Try again
+                
+                domWalker.currentNode = domWalker._searchSubtreeDepth(
+                    domWalker.docRoot, domWalker._isItemOfInterest);
+
+                if (onLoadFunc)
+                    onLoadFunc(domWalker.currentNode);
+            } catch (e) {
+                console.printException(e);
+            }
+        };
+    }
+
+    this.content.setTimeout (getDocRootClosure (this, onLoadFunc), 0);
+};
+
 
 DOMWalker.prototype._isItemOfInterest = function (obj) {
     return (obj.name && obj.name.trim() &&
@@ -79,8 +107,10 @@ DOMWalker.prototype._doWalk = function (sibling) {
     try {
         nextNode = this._nextNode(this.currentNode, sibling);
     } catch (e) {
-        nextNode = gAccRetrieval.getAccessibleFor(this.docRoot)
-            .QueryInterface(Ci.nsIAccessible);
+        this.getDocRoot(function (domWalker) {
+            return function (currentNode) {domWalker._doWalk(sibling);};
+        } (this));
+        return;
     }
 
     while (nextNode) {
@@ -92,6 +122,11 @@ DOMWalker.prototype._doWalk = function (sibling) {
         nextNode = this._nextNode(nextNode, sibling);
     }
 
-    if (obj)
+    if (obj) {
         this.currentNode = obj;
+        if (this.newNodeFunc)
+            this.newNodeFunc(this.currentNode);
+    } else {
+        console.warning("No new node.");
+    }
 }

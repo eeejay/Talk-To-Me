@@ -28,13 +28,19 @@ addMessageListener("TalkToMe:Navigate", function (message) {
 });
 
 function contentLoadedHandler (e) {
-    domWalker = new DOMWalker(content.document);
-    if (domWalker.currentNode)
-        sendAsyncMessage("TalkToMe:Speak",
-                         { phrase: accToPhrase(domWalker.currentNode),
-                           bounds: accToRect(content.window.pageXOffset,
-                                             content.window.pageYOffset,
-                                             domWalker.currentNode)});
+    domWalker = new DOMWalker(
+        content,
+        function (currentNode) {
+    sendAsyncMessage("TalkToMe:Speak",
+                     { phrase: accToPhrase(currentNode),
+                       bounds: accToRect(
+                           content.window.pageXOffset,
+                           content.window.pageYOffset,
+                           currentNode,
+                           // TODO: must be a better way to know if we are local.
+                           (content.location == "about:home")) 
+                     });
+        });
 }
 
 function navigateHandler(message) {
@@ -43,15 +49,5 @@ function navigateHandler(message) {
     else if (message.json.direction == "prev")
         domWalker.prev();
     else
-        return;
-
-    sendAsyncMessage("TalkToMe:Speak",
-                     { phrase: accToPhrase(domWalker.currentNode),
-                       bounds: accToRect(
-                           content.window.pageXOffset,
-                           content.window.pageYOffset,
-                           domWalker.currentNode,
-                           // TODO: must be a better way to know if we are local.
-                           (content.location == "about:home")) 
-                     });
+        throw "bad nav direction: " + message.json.direction;
 }
