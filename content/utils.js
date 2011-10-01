@@ -84,7 +84,7 @@ function printTree (acc, indent) {
 
     var padding = "";   
     for (var i=0;i<indent;i++) {
-        padding += " ";
+        padding += ".";
     }
 
     console.log(padding + accToString(acc));
