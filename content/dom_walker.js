@@ -20,7 +20,7 @@ DOMWalker.prototype._isItemOfInterest = function (obj) {
             obj.role == Ci.nsIAccessibleRole.ROLE_GRAPHIC);
 }
 
-DOMWalker.prototype._searchSubtreeDepth = function (obj, pred) {
+DOMWalker.prototype._searchSubtreeDepth = function (obj, pred, sibling) {
     if (!obj)
         return null;
 
@@ -28,13 +28,16 @@ DOMWalker.prototype._searchSubtreeDepth = function (obj, pred) {
         return obj;
 
     var child = obj.firstChild;
+    if (sibling == "previousSibling")
+        child = obj.lastChild;
+
     while (child) {
-        var ret = this._searchSubtreeDepth (child, pred);
+        var ret = this._searchSubtreeDepth (child, pred, sibling);
         if (ret)
             return ret;
 
         try {
-            child = child.nextSibling;
+            child = child[(sibling || "nextSibling")];
         } catch (e) {
             break;
         }
@@ -81,7 +84,7 @@ DOMWalker.prototype._doWalk = function (sibling) {
     }
 
     while (nextNode) {
-        obj = this._searchSubtreeDepth(nextNode, this._isItemOfInterest);
+        obj = this._searchSubtreeDepth(nextNode, this._isItemOfInterest, sibling);
 
         if (obj)
             break;
