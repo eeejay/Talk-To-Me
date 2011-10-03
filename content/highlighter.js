@@ -64,10 +64,10 @@ Highlighter.prototype.highlight = function (bounds) {
         view.scrollBy(Math.round(clipping.left || clipping.right),
                       Math.round(clipping.top || clipping.bottom));
 
-        rect = this._transformContentRect(bounds.top - padding,
-                                          bounds.left - padding,
-                                          bounds.bottom + padding,
-                                          bounds.right + padding);
+        rect = this._transformContentRect(bounds.top - this.padding,
+                                          bounds.left - this.padding,
+                                          bounds.bottom + this.padding,
+                                          bounds.right + this.padding);
     }
 
     this.clear();
