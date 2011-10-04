@@ -1,7 +1,8 @@
 try {
     Components.utils.import("resource://talktome/content/console.js");
-    Components.utils.import("resource://talktome/content/input_mangler.js");
+    Components.utils.import("resource://talktome/content/gesture_mangler.js");
     Components.utils.import("resource://talktome/content/highlighter.js");
+    Components.utils.import("resource://talktome/content/input_manager.js");
 } catch (e) {
     console.printException(e);
 }
@@ -10,8 +11,10 @@ var TalkToMe = {
     _highlighter: null,
 
     onLoad : function(aEvent) {
-        this.input_mangler = new InputMangler(window);
-        this.input_mangler.enable();
+        this.gesture_mangler = new GestureMangler(window);
+        this.gesture_mangler.enable();
+        
+        this.input_manager = new InputManager(window);
 
         window.messageManager.loadFrameScript(
             "resource://talktome/content/content-script.js", true);
@@ -59,10 +62,3 @@ window.addEventListener("UIReady", function(e) {
 window.addEventListener("UIReadyDelayed", function(e) {
   TalkToMe.onUIReadyDelayed(e);
 }, false);
-
-window.addEventListener("TalkToMe::Swipe", function (e) {
-    console.log ("Swipe");
-    console.dumpObj (e.detail);
-}, false);
-
-console.dumpObj(window);

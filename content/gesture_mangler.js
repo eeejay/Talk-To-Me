@@ -1,68 +1,71 @@
 Components.utils.import("resource://talktome/content/console.js");
 Components.utils.import("resource://gre/modules/Geometry.jsm");
 
-EXPORTED_SYMBOLS = ["InputMangler"];
+EXPORTED_SYMBOLS = ["GestureMangler"];
 
 var Ci = Components.interfaces;
 
-function InputMangler (window) {
+function GestureMangler (window) {
     this.window = window;
 
     this.eventGenerator = new GestureEventGenerator(window);
 
     let w = window.wrappedJSObject;
 
-    if (!w.MouseModule)
-        throw "No MouseModule found";
+    if (!w.MouseModule) {
+        console.warning("No MouseModule found");
+        return;
+    }
 
     this._origMouseHandler = w.MouseModule.prototype.handleEvent;
 
-    if (!w.GestureModule)
-        throw "No GestureModule found";
+    if (!w.GestureModule) {
+        console.warning("No GestureModule found");
+        return;
+    }
 
     this._origGestureHandler = w.GestureModule.prototype.handleEvent;
     
 }
 
-InputMangler.prototype._setHandler = function (module, handler) {
+GestureMangler.prototype._setHandler = function (module, handler) {
     module.prototype.handleEvent = handler;
 }
 
-InputMangler.prototype.enable = function () {
+GestureMangler.prototype.enable = function () {
     let w = this.window.wrappedJSObject;
 
-    this._setHandler(w.MouseModule, function (inputMangler) {
+    this._setHandler(w.MouseModule, function (gesturemangler) {
         return function (e) {
             let rv = false;
             
             try {
-                rv = InputMangler.prototype.mouseHandler.apply(inputMangler, [e]);
+                rv = GestureMangler.prototype.mouseHandler.apply(gesturemangler, [e]);
             } catch (e) {
                 console.log("Error::mouseHandler: " + e);
             }
             
             if (!rv)
-                inputMangler._origMouseHandler(e);
+                gesturemangler._origMouseHandler(e);
         };
     }(this));
-    this._setHandler(w.GestureModule, function (inputMangler) {
+    this._setHandler(w.GestureModule, function (gesturemangler) {
         return function (e) {
             let rv = false;
             
             try {
-                rv = InputMangler.prototype.gestureHandler.apply(inputMangler, [e]);
+                rv = GestureMangler.prototype.gestureHandler.apply(gesturemangler, [e]);
             } catch (e) {
                 console.log("Error::gestureHandler: " + e);
             }
             
             if (!rv)
-                inputMangler._origGestureHandler(e);
+                gesturemangler._origGestureHandler(e);
         };
     }(this));
-    this.window.addEventListener('keypress', this.keypressHandler, false);
 };
 
-InputMangler.prototype.disable = function () {
+GestureMangler.prototype.disable = function () {
     let w = this.window.wrappedJSObject;
 
     this._setHandler(w.MouseModule, this._origMouseHandler);
@@ -70,7 +73,7 @@ InputMangler.prototype.disable = function () {
     this.window.removeEventListener('keypress', this.keypressHandler, false);
 };
 
-InputMangler.prototype.mouseHandler = function (e) {
+GestureMangler.prototype.mouseHandler = function (e) {
     if (!e.target.ownerDocument) {
         console.warning("e.target.ownerDocument is null");
         return false;
@@ -95,7 +98,7 @@ InputMangler.prototype.mouseHandler = function (e) {
     }
 };
 
-InputMangler.prototype.gestureHandler = function (e) {
+GestureMangler.prototype.gestureHandler = function (e) {
     if (!e.target.ownerDocument) {
         console.warning("e.target.ownerDocument is null");
         return false;
@@ -111,39 +114,31 @@ InputMangler.prototype.gestureHandler = function (e) {
 
     if (e.type == "MozSwipeGesture") {
         this.eventGenerator.doingMozGesture = true;
+        let direction;
+
         switch (e.direction) {
         case e.DIRECTION_RIGHT:
-            console.log ("next");
-            mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "next" });
-            return true;
+            direction = "right";
+            break;
         case e.DIRECTION_LEFT:
-            console.log ("prev");
-            mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "prev" });
-            return true;
+            direction = "left";
+            break;
+        case e.DIRECTION_UP:
+            direction = "up";
+            break;
+        case e.DIRECTION_DOWN:
+            direction = "down";
+            break;
         default:
             break;
         }
+
+        this.eventGenerator.emitEvent("Swipe",
+                                      {direction: direction, fingers: 3});
+        return true;
     }
 
     return false;
-};
-
-InputMangler.prototype.keypressHandler = function (e) {
-    if (e.altKey) {
-        let mm = this.window.Browser.selectedTab.browser.messageManager
-        switch (e.keyCode) {
-        case e.DOM_VK_DOWN:
-            mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "next" });
-            console.log ("next");
-            break;
-        case e.DOM_VK_UP:
-            mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "prev" });
-            console.log ("prev");
-            break;
-        default:
-            break;
-        }
-    }
 };
 
 function GestureEventGenerator (window) {
@@ -239,22 +234,22 @@ GestureEventGenerator.prototype = {
         if (Math.abs(deltaX) > Math.abs(deltaY)) {
             // Horizontal swipe.
             if (deltaX > 0)
-                console.log ("swipe left");
+                this.emitEvent("Swipe", {direction: "left", fingers: 1});
             else
-                this._emitEvent("TalkToMe::Swipe", {direction: "right"});
+                this.emitEvent("Swipe", {direction: "right", fingers: 1});
         } else if (Math.abs(deltaX) < Math.abs(deltaY)) {
             // Vertical swipe.
             if (deltaY > 0)
-                console.log ("swipe down");
+                this.emitEvent("Swipe", {direction: "down", fingers: 1});
             else
-                console.log ("swipe up");
+                this.emitEvent("Swipe", {direction: "up", fingers: 1});
         } else {
             // A perfect 45 degree swipe?? Not in our book.
         }
     },
-    _emitEvent: function (eventType, eventDetails) {
+    emitEvent: function (eventType, eventDetails) {
         let e = this.window.document.createEvent("CustomEvent");
-        e.initCustomEvent(eventType, true, true, eventDetails);
+        e.initCustomEvent("TalkToMe::" + eventType, true, true, eventDetails);
 
         this.window.document.dispatchEvent(e);
     }
