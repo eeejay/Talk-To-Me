@@ -44,7 +44,7 @@ TextToSpeech.prototype.speak = function (s, queue) {
     let _queue = queue || TextToSpeech.QUEUE_FLUSH;
     console.log("SPEAK: " + s + " queue: " + _queue);
     if (this.android_tts) {
-        let ret = this.android_tts.speak(s, 0, 0);
+        let ret = this.android_tts.speak(s || "", 0, 0);
         console.log(ret);
         return (ret == 0);
     }
