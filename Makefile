@@ -13,6 +13,8 @@ APP_VERSION := \
 	${shell sed -n 's/.*<em:version>\([^<]*\)<\/em:version>.*/\1/p' < $(RDF)}
 
 FIREFOX_PATH = $(shell which fennec)
+#FIREFOX_EXTRA_OPTIONS = --app-arg="-jsconsole"
+FIREFOX_EXTRA_OPTIONS =
 
 XPI_FILE := $(APP_NAME)-$(APP_VERSION).xpi
 
@@ -29,7 +31,7 @@ clean:
 	rm $(XPI_FILE)
 
 run: $(XPI_FILE)
-	mozmill --addons=$< -b $(FIREFOX_PATH) --app-arg="-jsconsole"
+	mozmill --addons=$< --show-errors -b $(FIREFOX_PATH) --app-arg="$(FIREFOX_EXTRA_OPTIONS)"
 
 install-android: $(SOURCES)
 	$(ANDROID_LAUNCER) command chmod 755 /data
