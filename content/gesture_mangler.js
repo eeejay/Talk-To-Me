@@ -166,6 +166,9 @@ function GestureEventGenerator (window) {
     this._prevGestureType = "";
     this._prevGestureDetails = [];
     this._prevGestureTime = 0;
+
+    // dwell support
+    this._dwellTimeout = 0;
 }
 
 // minimal swipe distance in inches
@@ -179,6 +182,9 @@ const DOUBLE_GESTURE_MAX_DELAY = 400;
 
 // delay before tap turns into dwell
 const DWELL_MIN_TIME = 500;
+
+// delay before distinct dwell events
+const DWELL_REPEAT_DELAY = 300;
 
 // maximum distance the mouse could move during a dwell in inches
 const DWELL_MAX_RADIUS = 0.2;
@@ -198,8 +204,18 @@ GestureEventGenerator.prototype = {
         this._lastY = y;
         this._realDistance = 0;
         this.doingMozGesture = false;
+        this._dwellTimeout = this.window.setTimeout(function (self) {
+            return function () {
+                try {
+                    GestureEventGenerator.prototype._dwellEmit.apply(self, []);
+                } catch (e) {
+                    console.printException(e);
+                }
+            };}(this), DWELL_MIN_TIME);
     },
     up: function (timestamp, x, y) {
+        this.window.clearTimeout(this._dwellTimeout);
+        this._dwellTimeout = 0;
         if (this.doingMozGesture)
             return;
         this._upTime = timestamp;
@@ -220,18 +236,13 @@ GestureEventGenerator.prototype = {
                               startX, startY, endX, endY) {
         let directDistance = this._distance (endX, endY, startX, startY);
 
-        console.log ("Duration: " + duration);
-        console.log ("Distance: " + directDistance);
-        console.log ("Real distance: " + realDistance);
-
         // To be considered a tap...
         if (duration < DWELL_MIN_TIME && // Too short to be a dwell
-            (directDistance / this._dpi) < SWIPE_MIN_DISTANCE) { // Didn't travel
+            (realDistance / this._dpi) < SWIPE_MIN_DISTANCE) { // Didn't travel
             this.emitEvent("Tap", {x: startX, y: startY, fingers: 1});
         }
-
         // To be considered a swipe...
-        if (duration <= SWIPE_MAX_DURATION && // Quick enough
+        else if (duration <= SWIPE_MAX_DURATION && // Quick enough
             (directDistance / this._dpi) >= SWIPE_MIN_DISTANCE && // Traveled far
             (directDistance * 1.2) >= realDistance) { // Direct enough
 
@@ -264,10 +275,28 @@ GestureEventGenerator.prototype = {
         this._prevGestureTime = this._upTime;
         this._prevGestureType = eventType;
 
+        //console.log ("Emitting " + eventType);
+        //console.dumpObj(eventDetails);
+
         let e = this.window.document.createEvent("CustomEvent");
         e.initCustomEvent("TalkToMe::" + eventType, true, true,
                           this._prevGestureDetails);
 
         this.window.document.dispatchEvent(e);
     },
+    _dwellEmit: function () {
+        this.emitEvent("Dwell", {x: this._lastX, y: this._lastY});
+
+        if (this._dwellTimeout == 0)
+            return;
+
+        this._dwellTimeout = this.window.setTimeout(function (self) {
+            return function () {
+                try {
+                    GestureEventGenerator.prototype._dwellEmit.apply(self, []);
+                } catch (e) {
+                    console.printException(e);
+                }
+            };}(this), DWELL_REPEAT_DELAY);
+    }
 };
