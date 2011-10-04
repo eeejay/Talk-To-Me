@@ -49,6 +49,10 @@ InputManager.prototype.keypressHandler = function (e) {
             mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "prev" });
             console.log ("prev");
             break;
+        case 13: // For some reason DOM_VK_ENTER maps to 14 ??
+            mm.sendAsyncMessage("TalkToMe:Activate");
+            console.log ("activate");
+            break;
         default:
             break;
         }
