@@ -25,8 +25,34 @@ InputMangler.prototype._setHandler = function (module, handler) {
 InputMangler.prototype.enable = function () {
     let w = this.window.wrappedJSObject;
 
-    this._setHandler(w.MouseModule, this.mouseHandler);
-    this._setHandler(w.GestureModule, this.gestureHandler);
+    this._setHandler(w.MouseModule, function (inputMangler) {
+        return function (e) {
+            let rv = false;
+            
+            try {
+                rv = InputMangler.prototype.mouseHandler.apply(inputMangler, [e]);
+            } catch (e) {
+                console.log("Error::mouseHandler: " + e);
+            }
+            
+            if (!rv)
+                inputMangler._origMouseHandler(e);
+        };
+    }(this));
+    this._setHandler(w.GestureModule, function (inputMangler) {
+        return function (e) {
+            let rv = false;
+            
+            try {
+                rv = InputMangler.prototype.gestureHandler.apply(inputMangler, [e]);
+            } catch (e) {
+                console.log("Error::gestureHandler: " + e);
+            }
+            
+            if (!rv)
+                inputMangler._origGestureHandler(e);
+        };
+    }(this));
     this.window.addEventListener('keypress', this.keypressHandler, false);
 };
 
@@ -39,18 +65,6 @@ InputMangler.prototype.disable = function () {
 };
 
 InputMangler.prototype.mouseHandler = function (e) {
-    let rv = false;
-    try {
-        rv = InputMangler._mouseHandler(e);
-    } catch (e) {
-        console.log("Error::mouseHandler: " + e);
-    }
-
-    if (!rv)
-        this._origMouseHandler(e);
-};
-
-InputMangler._mouseHandler = function (e) {
     if (!e.target.ownerDocument) {
         console.warning("e.target.ownerDocument is null");
         return false;
@@ -60,23 +74,10 @@ InputMangler._mouseHandler = function (e) {
     if (e.type == "mousedown" || e.type == "mousemove" || e.type == "mouseup" ||
         e.type == "click")
         return true;
-
-    return false;
+    }
 };
 
 InputMangler.prototype.gestureHandler = function (e) {
-    let rv = false;
-    try {
-        rv = InputMangler._gestureHandler(e);
-    } catch (e) {
-        console.log("Error::gestureHandler: " + e);
-    }
-    
-    if (!rv)
-        this._origGestureHandler(e);
-};
-
-InputMangler._gestureHandler = function (e) {
     if (!e.target.ownerDocument) {
         console.warning("e.target.ownerDocument is null");
         return false;
