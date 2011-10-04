@@ -130,3 +130,21 @@ DOMWalker.prototype._doWalk = function (sibling) {
         console.warning("No new node.");
     }
 }
+
+DOMWalker.prototype.activate = function (node) {
+    node = node || this.currentNode;
+
+    for (let i=0;i<node.numActions;i++) {
+        let actionName = node.getActionName(i);
+        console.log(actionName);
+        if (actionName == "jump" ||
+            actionName == "press" ||
+            actionName == "click") {
+            node.doAction (i);
+            return;
+        }
+    }
+
+    if (node.parent)
+        this.activate(node.parent);
+}

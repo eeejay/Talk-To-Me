@@ -27,6 +27,14 @@ addMessageListener("TalkToMe:Navigate", function (message) {
     }
 });
 
+addMessageListener("TalkToMe:Activate", function (message) {
+    try {
+        activateHandler (message);
+    } catch (e) {
+        console.printException(e);
+    }
+});
+
 function contentLoadedHandler (e) {
     domWalker = new DOMWalker(
         content,
@@ -50,4 +58,8 @@ function navigateHandler(message) {
         domWalker.prev();
     else
         throw "bad nav direction: " + message.json.direction;
+}
+
+function activateHandler(message) {
+    domWalker.activate();
 }
