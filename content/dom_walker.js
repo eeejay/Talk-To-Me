@@ -30,6 +30,8 @@ DOMWalker.prototype.getDocRoot = function(onLoadFunc) {
                 domWalker.currentNode = domWalker._searchSubtreeDepth(
                     domWalker.docRoot, domWalker._isItemOfInterest);
 
+                // printTree (domWalker.docRoot);
+                
                 if (onLoadFunc)
                     onLoadFunc(domWalker.currentNode);
             } catch (e) {
@@ -48,7 +50,8 @@ DOMWalker.prototype._isItemOfInterest = function (obj) {
              obj.role == Ci.nsIAccessibleRole.ROLE_GRAPHIC) ||
             obj.role == Ci.nsIAccessibleRole.ROLE_ENTRY ||
             obj.role == Ci.nsIAccessibleRole.ROLE_CHECKBUTTON ||
-            obj.role == Ci.nsIAccessibleRole.ROLE_RADIOBUTTON);
+            obj.role == Ci.nsIAccessibleRole.ROLE_RADIOBUTTON ||
+            obj.role == Ci.nsIAccessibleRole.ROLE_COMBOBOX_OPTION);
 }
 
 DOMWalker.prototype._searchSubtreeDepth = function (obj, pred, sibling) {
@@ -137,9 +140,18 @@ DOMWalker.prototype._doWalk = function (sibling) {
 DOMWalker.prototype.activate = function (node) {
     node = node || this.currentNode;
 
+    // Not fantastic, but works for now.
+    // TODO: Either integrate it with the visual interface, or at least
+    // treat ROLE_COMBOBOX as an atomic item until the user activates it, and then
+    // iterate through the options.
+    if (node.role == Ci.nsIAccessibleRole.ROLE_COMBOBOX_OPTION) {
+        node.takeSelection();
+        return;
+    }
+
     for (let i=0;i<node.numActions;i++) {
         let actionName = node.getActionName(i);
-        console.log(actionName);
+        console.log(accToString(node) + " " + actionName);
         if (actionName == "jump" ||
             actionName == "press" ||
             actionName == "click" ||
