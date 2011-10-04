@@ -219,32 +219,35 @@ GestureEventGenerator.prototype = {
         console.log ("Distance: " + directDistance);
         console.log ("Real distance: " + realDistance);
 
-        // To long of a duration to be considered a swipe
-        if (duration > SWIPE_MAX_DURATION) return;
+        // To be considered a tap...
+        if (duration < DWELL_MIN_TIME && // Too short to be a dwell
+            (directDistance / this._dpi) < SWIPE_MIN_DISTANCE) { // Didn't travel
+            this.emitEvent("Tap", {x: startX, y: startY, fingers: 1});
+        }
 
-        // To small to consider a swipe.
-        if ((directDistance / this._dpi) < SWIPE_MIN_DISTANCE) return;
+        // To be considered a swipe...
+        if (duration <= SWIPE_MAX_DURATION && // Quick enough
+            (directDistance / this._dpi) >= SWIPE_MIN_DISTANCE && // Traveled far
+            (directDistance * 1.2) >= realDistance) { // Direct enough
 
-        // Didn't trace a direct enough line.
-        if ((directDistance * 1.2) < realDistance) return;
+            let deltaX = endX - startX;
+            let deltaY = endY - startY;
 
-        let deltaX = endX - startX;
-        let deltaY = endY - startY;
-        
-        if (Math.abs(deltaX) > Math.abs(deltaY)) {
-            // Horizontal swipe.
-            if (deltaX > 0)
-                this.emitEvent("Swipe", {direction: "left", fingers: 1});
-            else
-                this.emitEvent("Swipe", {direction: "right", fingers: 1});
-        } else if (Math.abs(deltaX) < Math.abs(deltaY)) {
-            // Vertical swipe.
-            if (deltaY > 0)
-                this.emitEvent("Swipe", {direction: "down", fingers: 1});
-            else
-                this.emitEvent("Swipe", {direction: "up", fingers: 1});
-        } else {
-            // A perfect 45 degree swipe?? Not in our book.
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // Horizontal swipe.
+                if (deltaX > 0)
+                    this.emitEvent("Swipe", {direction: "left", fingers: 1});
+                else
+                    this.emitEvent("Swipe", {direction: "right", fingers: 1});
+            } else if (Math.abs(deltaX) < Math.abs(deltaY)) {
+                // Vertical swipe.
+                if (deltaY > 0)
+                    this.emitEvent("Swipe", {direction: "down", fingers: 1});
+                else
+                    this.emitEvent("Swipe", {direction: "up", fingers: 1});
+            } else {
+                // A perfect 45 degree swipe?? Not in our book.
+            }
         }
     },
     emitEvent: function (eventType, eventDetails) {
