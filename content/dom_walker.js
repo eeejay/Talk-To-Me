@@ -43,9 +43,12 @@ DOMWalker.prototype.getDocRoot = function(onLoadFunc) {
 
 
 DOMWalker.prototype._isItemOfInterest = function (obj) {
-    return (obj.name && obj.name.trim() &&
-            obj.role == Ci.nsIAccessibleRole.ROLE_TEXT_LEAF ||
-            obj.role == Ci.nsIAccessibleRole.ROLE_GRAPHIC);
+    return ((obj.name && obj.name.trim() &&
+             obj.role == Ci.nsIAccessibleRole.ROLE_TEXT_LEAF ||
+             obj.role == Ci.nsIAccessibleRole.ROLE_GRAPHIC) ||
+            obj.role == Ci.nsIAccessibleRole.ROLE_ENTRY ||
+            obj.role == Ci.nsIAccessibleRole.ROLE_CHECKBUTTON ||
+            obj.role == Ci.nsIAccessibleRole.ROLE_RADIOBUTTON);
 }
 
 DOMWalker.prototype._searchSubtreeDepth = function (obj, pred, sibling) {
@@ -139,7 +142,10 @@ DOMWalker.prototype.activate = function (node) {
         console.log(actionName);
         if (actionName == "jump" ||
             actionName == "press" ||
-            actionName == "click") {
+            actionName == "click" ||
+            actionName == "activate" ||
+            actionName == "check" ||
+            actionName == "uncheck") {
             node.doAction (i);
             return;
         }
