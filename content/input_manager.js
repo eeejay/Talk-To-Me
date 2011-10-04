@@ -6,16 +6,16 @@ function InputManager (window) {
     this.window = window;
 
     console.log("listening");
-   this.window.addEventListener('keypress', this.keypressHandler, false);
+    this.window.addEventListener('keypress', this.keypressHandler, false);
     this.window.addEventListener('TalkToMe::Swipe', this.swipeHandler, false);
 }
 
 InputManager.prototype.swipeHandler = function (e) {
     let mm = this.window.Browser.selectedTab.browser.messageManager;
-    console.log(e.detail.fingers);
-    if (e.detail.fingers == 1) {
-        console.dumpObj(e);
-        switch (e.detail.direction) {
+    let detail = e.detail[e.detail.length-1];
+    if (detail.fingers == 1) {
+
+        switch (detail.direction) {
         case "right":
             mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "next" });
             console.log ("next");
@@ -28,7 +28,6 @@ InputManager.prototype.swipeHandler = function (e) {
             break;
         }
     }
-    
 };
 
 InputManager.prototype.keypressHandler = function (e) {

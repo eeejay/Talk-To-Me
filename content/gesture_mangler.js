@@ -161,6 +161,11 @@ function GestureEventGenerator (window) {
 
     // moz gesture inter-op;
     this.doingMozGesture = false;
+
+    // for counting consecutive gestures
+    this._prevGestureType = "";
+    this._prevGestureDetails = [];
+    this._prevGestureTime = 0;
 }
 
 // minimal swipe distance in inches
@@ -170,7 +175,7 @@ const SWIPE_MIN_DISTANCE = 0.4;
 const SWIPE_MAX_DURATION = 400;
 
 // maximum double tap delay
-const DOUBLE_TAP_MAX_DELAY = 400;
+const DOUBLE_GESTURE_MAX_DELAY = 400;
 
 // delay before tap turns into dwell
 const DWELL_MIN_TIME = 500;
@@ -251,9 +256,18 @@ GestureEventGenerator.prototype = {
         }
     },
     emitEvent: function (eventType, eventDetails) {
+        if (eventType == this._prevGestureType &&
+            this._upTime - this._prevGestureTime < DOUBLE_GESTURE_MAX_DELAY)
+            this._prevGestureDetails.push(eventDetails);
+        else
+            this._prevGestureDetails = [eventDetails];
+        this._prevGestureTime = this._upTime;
+        this._prevGestureType = eventType;
+
         let e = this.window.document.createEvent("CustomEvent");
-        e.initCustomEvent("TalkToMe::" + eventType, true, true, eventDetails);
+        e.initCustomEvent("TalkToMe::" + eventType, true, true,
+                          this._prevGestureDetails);
 
         this.window.document.dispatchEvent(e);
-    }
+    },
 };
