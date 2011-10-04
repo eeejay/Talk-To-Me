@@ -59,3 +59,10 @@ window.addEventListener("UIReady", function(e) {
 window.addEventListener("UIReadyDelayed", function(e) {
   TalkToMe.onUIReadyDelayed(e);
 }, false);
+
+window.addEventListener("TalkToMe::Swipe", function (e) {
+    console.log ("Swipe");
+    console.dumpObj (e.detail);
+}, false);
+
+console.dumpObj(window);
