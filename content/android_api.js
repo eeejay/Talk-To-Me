@@ -10,6 +10,7 @@ var jobject = ctypes.voidptr_t;
 var jvalue = ctypes.voidptr_t;
 var jmethodid = ctypes.voidptr_t;
 var jfieldid = ctypes.voidptr_t;
+var jthrowable = ctypes.voidptr_t;
 
 const N_REFS = 16;
 
@@ -36,9 +37,15 @@ var JNINativeInterface = new ctypes.StructType(
      {ToReflectedField: ctypes.voidptr_t},
      {Throw: ctypes.voidptr_t},
      {ThrowNew: ctypes.voidptr_t},
-     {ExceptionOccurred: ctypes.voidptr_t},
-     {ExceptionDescribe: ctypes.voidptr_t},
-     {ExceptionClear: ctypes.voidptr_t},
+     {ExceptionOccurred: new ctypes.FunctionType(
+         ctypes.default_abi,
+         jthrowable, [ctypes.voidptr_t]).ptr},
+     {ExceptionDescribe:  new ctypes.FunctionType(
+         ctypes.default_abi,
+         ctypes.void_t, [ctypes.voidptr_t]).ptr},
+     {ExceptionClear: new ctypes.FunctionType(
+         ctypes.default_abi,
+         ctypes.void_t, [ctypes.voidptr_t]).ptr},
      {FatalError: ctypes.voidptr_t},
      {PushLocalFrame: new ctypes.FunctionType(ctypes.default_abi,
                                               ctypes.int32_t,
@@ -473,6 +480,13 @@ function JavaObject (cls, args) {
             }
 
             let rv = this.env[_returntypes[returntype]].apply(this.env, _args);
+
+            let exc = this.env.ExceptionOccurred();
+
+            if (!exc.isNull()) {
+                this.env.ExceptionDescribe();
+                this.env.ExceptionClear();
+            }
 
             if (returntype[0] = 'L')
                 this.env.popFrame(rv);
