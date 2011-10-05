@@ -22,6 +22,9 @@ ADB = /opt/android/android-sdk-linux_x86/platform-tools/adb
 ANDROID_PKG = org.mozilla.fennec_eitan
 ANDROID_LAUNCER = ./android_launcher.py --adb $(ADB) --pkg-name $(ANDROID_PKG)
 
+TIMESTAMP = ${shell date -u +"%Y%m%d%H%M"}
+SNAPSHOT = $(APP_NAME)-snapshot-$(TIMESTAMP).xpi
+
 $(XPI_FILE): $(SOURCES)
 	zip $@ $^
 
@@ -29,6 +32,10 @@ all: $(XPI_FILE)
 
 clean:
 	rm $(XPI_FILE)
+
+snapshot: $(XPI_FILE)
+	@echo Creating snapshot: $(SNAPSHOT)
+	@cp $(XPI_FILE) $(SNAPSHOT)
 
 run: $(XPI_FILE)
 	mozmill --addons=$< --show-errors -b $(FIREFOX_PATH) --app-arg="$(FIREFOX_EXTRA_OPTIONS)"
