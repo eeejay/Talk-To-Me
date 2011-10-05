@@ -5,11 +5,23 @@ EXPORTED_SYMBOLS=["InputManager"];
 function InputManager (window) {
     this.window = window;
 
-    console.log("listening");
     this.window.addEventListener('keypress', this.keypressHandler, false);
     this.window.addEventListener('TalkToMe::Swipe', this.swipeHandler, false);
     this.window.addEventListener('TalkToMe::Tap', this.tapHandler, false);
+    this.window.addEventListener('TalkToMe::Dwell', this.dwellHandler, false);
 }
+
+InputManager.prototype.dwellHandler = function (e) {
+    // navigate to item under finger
+    try {
+        let browser = this.window.Browser.selectedTab.browser;
+        let d = e.detail[e.detail.length-1];
+        browser.messageManager.sendAsyncMessage(
+            "TalkToMe:Navigate", browser.transformClientToBrowser (d.x, d.y));
+    } catch (e) {
+        console.printException(e);
+    }
+};
 
 InputManager.prototype.tapHandler = function (e) {
     if (e.detail.length != 2) return // not a double tap.
