@@ -17,23 +17,24 @@ function DOMWalker(content, newNodeFunc) {
 
 // borrowed from a11y mochitests.
 DOMWalker.prototype.getDocRoot = function(onLoadFunc) {
-    function getDocRootClosure (domWalker, onLoadFunc) {
+    function getDocRootClosure (self, onLoadFunc) {
         return function () {
             try {
-                domWalker.docRoot = getAccessible(domWalker.content.document);
+                let docRoot = getAccessible(self.content.document);
 
                 let state = {};
-                domWalker.docRoot.getState(state, {});
+                docRoot.getState(state, {});
                 if (state.value & STATE_BUSY)
-                    return domWalker.getDocRoot (onLoadFunc); // Try again
+                    return self.getDocRoot (onLoadFunc); // Try again
                 
-                domWalker.currentNode = domWalker._searchSubtreeDepth(
-                    domWalker.docRoot, domWalker._isItemOfInterest);
+                self.docRoot = docRoot;
+                self.currentNode = self._searchSubtreeDepth(
+                    self.docRoot, self._isItemOfInterest);
 
-                // printTree (domWalker.docRoot);
+                // printTree (self.docRoot);
                 
                 if (onLoadFunc)
-                    onLoadFunc(domWalker.currentNode);
+                    onLoadFunc(self.currentNode);
             } catch (e) {
                 console.printException(e);
             }
@@ -113,8 +114,8 @@ DOMWalker.prototype._doWalk = function (sibling) {
     try {
         nextNode = this._nextNode(this.currentNode, sibling);
     } catch (e) {
-        this.getDocRoot(function (domWalker) {
-            return function (currentNode) {domWalker._doWalk(sibling);};
+        this.getDocRoot(function (self) {
+            return function (currentNode) {self._doWalk(sibling);};
         } (this));
         return;
     }
