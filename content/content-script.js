@@ -57,12 +57,18 @@ function contentLoadedHandler (e) {
 }
 
 function navigateHandler(message) {
-    if (message.json.direction == "next")
-        domWalker.next();
-    else if (message.json.direction == "prev")
-        domWalker.prev();
-    else
-        throw "bad nav direction: " + message.json.direction;
+    let direction = message.json.direction;
+
+    if (direction) {
+        if (direction == "next")
+            domWalker.next();
+        else if (direction == "prev")
+            domWalker.prev();
+    } else if (message.json.x != undefined && message.json.y != undefined) {
+        domWalker.navigateToPoint(message.json.x, message.json.y);
+    } else {
+        throw "bad nav command"
+    }
 }
 
 function activateHandler(message) {

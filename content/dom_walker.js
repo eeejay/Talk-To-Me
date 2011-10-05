@@ -166,3 +166,28 @@ DOMWalker.prototype.activate = function (node) {
     if (node.parent)
         this.activate(node.parent);
 }
+
+DOMWalker.prototype.navigateToPoint = function (x, y) {
+    if (!this.docRoot) return;
+
+    let child = this.docRoot.getChildAtPoint(x, y);
+
+    while (child) {
+        if (this._isItemOfInterest (child) ||
+            // TODO: remove comb box special case
+            child.role == Ci.nsIAccessibleRole.ROLE_COMBOBOX) { 
+            if (child != this.currentNode) {
+                this.currentNode = child;
+                if (this.newNodeFunc)
+                    this.newNodeFunc(this.currentNode);
+            }
+            return;
+        }
+        let _child = child.getChildAtPoint(x, y);
+
+        if (_child === child)
+            break;
+
+        child = _child;
+    }
+};
