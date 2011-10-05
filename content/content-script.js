@@ -1,6 +1,11 @@
-Components.utils.import("resource://talktome/content/dom_walker.js");
 Components.utils.import("resource://talktome/content/console.js");
-Components.utils.import("resource://talktome/content/utils.js");
+
+try {
+    Components.utils.import("resource://talktome/content/dom_walker.js");
+    Components.utils.import("resource://talktome/content/utils.js");
+} catch (e) {
+    console.printException(e);
+}
 
 var Cc = Components.classes;
 var Ci = Components.interfaces;
