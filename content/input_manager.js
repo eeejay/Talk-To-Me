@@ -3,12 +3,10 @@ Components.utils.import("resource://talktome/content/console.js");
 EXPORTED_SYMBOLS=["InputManager"];
 
 function InputManager (window) {
-    this.window = window;
-
-    this.window.addEventListener('keypress', this.keypressHandler, false);
-    this.window.addEventListener('TalkToMe::Swipe', this.swipeHandler, false);
-    this.window.addEventListener('TalkToMe::Tap', this.tapHandler, false);
-    this.window.addEventListener('TalkToMe::Dwell', this.dwellHandler, false);
+    window.addEventListener('keypress', this.keypressHandler, false);
+    window.addEventListener('TalkToMe::Swipe', this.swipeHandler, false);
+    window.addEventListener('TalkToMe::Tap', this.tapHandler, false);
+    window.addEventListener('TalkToMe::Dwell', this.dwellHandler, false);
 }
 
 InputManager.prototype.dwellHandler = function (e) {
@@ -36,12 +34,14 @@ InputManager.prototype.swipeHandler = function (e) {
 
         switch (detail.direction) {
         case "right":
-            mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "next" });
             console.log ("next");
+            this.tts.playTick();
+            mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "next" });
             break;
         case "left":
-            mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "prev" });
             console.log ("prev");
+            this.tts.playTick();
+            mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "prev" });
             break;
         default:
             break;

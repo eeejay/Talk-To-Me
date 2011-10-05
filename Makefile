@@ -1,11 +1,13 @@
 RDF = install.rdf
 
 CONTENT_SOURCES = $(shell ls content/*.js)
+MEDIA_FILES = $(shell ls media/*.wav)
 
 SOURCES = \
 	bootstrap.js \
 	$(RDF) \
-	$(CONTENT_SOURCES)
+	$(CONTENT_SOURCES) \
+	$(MEDIA_FILES)
 
 APP_NAME := \
 	${shell sed -n 's/.*<em:id>\([^<]*\)@.*<\/em:id>.*/\1/p' < $(RDF)}
@@ -43,10 +45,14 @@ run: $(XPI_FILE)
 install-android: $(SOURCES)
 	$(ANDROID_LAUNCER) command chmod 755 /data
 	$(ANDROID_LAUNCER) mkdirs /data/local/talktome/content
+	$(ANDROID_LAUNCER) mkdirs /data/local/talktome/media
 	$(ADB) push $(RDF) /data/local/talktome
 	$(ADB) push bootstrap.js /data/local/talktome
 	for fname in $(CONTENT_SOURCES); do \
 		$(ADB) push $$fname /data/local/talktome/content; \
+	done
+	for fname in $(MEDIA_FILES); do \
+		$(ADB) push $$fname /data/local/talktome/media; \
 	done
 
 run-android: install-android

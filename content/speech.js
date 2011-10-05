@@ -1,20 +1,39 @@
 var EXPORTED_SYMBOLS=["TextToSpeech"];
 
-Components.utils.import("resource://gre/modules/ctypes.jsm")
-Components.utils.import("resource://talktome/content/console.js");
+const Ci = Components.interfaces;
+const Cu = Components.utils;
+
+Cu.import("resource://gre/modules/ctypes.jsm")
+Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://talktome/content/console.js");
 
 var using_android = true;
 
 try {
-    Components.utils.import("resource://talktome/content/android_api.js");
+    Cu.import("resource://talktome/content/android_api.js");
 } catch (e) {
-    console.log("Error loading android_api.js: " + e);
+    console.log("Error loading android_api.js");
+    console.printException(e);
     using_android = false;
 }
 
 function TextToSpeech() {
     if (using_android)
         this.android_tts = this._get_android_tts();
+    
+    this._registered_earcons = false;
+}
+
+TextToSpeech.prototype._register_earcons = function () {
+    let resource = Services.io.getProtocolHandler("resource").
+        QueryInterface(Ci.nsIResProtocolHandler);
+    let uri = Services.io.newURI("resource://talktome/media/tick.wav",
+                                 null, null);
+    let tick_path = resource.resolveURI(uri);
+
+    let rv = this.android_tts.addEarcon("[tick]", tick_path);
+
+    console.log ("Register earcons: " + ((rv == 0) ? "success" : "fail"));
 }
 
 TextToSpeech.prototype._get_android_tts = function () {
@@ -27,6 +46,8 @@ TextToSpeech.prototype._get_android_tts = function () {
         {constructor: "(Landroid/content/Context;Landroid/speech/tts/TextToSpeech$OnInitListener;)V",
          methods: {
              speak: "(Ljava/lang/String;ILjava/util/HashMap;)I",
+             addEarcon: "(Ljava/lang/String;Ljava/lang/String;)I",
+             playEarcon: "(Ljava/lang/String;ILjava/util/HashMap;)I",
              setPitch: "(F)I",
              shutdown: "()V"
          }
@@ -40,11 +61,23 @@ TextToSpeech.prototype._get_android_tts = function () {
     return android_tts;
 }
 
-TextToSpeech.prototype.speak = function (s, queue) {
-    let _queue = queue || TextToSpeech.QUEUE_FLUSH;
-    console.log("SPEAK: " + s + " queue: " + _queue);
+TextToSpeech.prototype.playTick = function () {
     if (this.android_tts) {
-        let ret = this.android_tts.speak(s || "", 0, 0);
+        if (!this._registered_earcons)
+            this._register_earcons();
+        this.android_tts.playEarcon("[tick]", TextToSpeech.QUEUE_FLUSH, 0);
+    }
+    this._dont_interrupt = true;
+}
+
+
+TextToSpeech.prototype.speakContent = function (s) {
+    console.log("SPEAK: " + s);
+    let queue = (this._dont_interrupt) ?
+        TextToSpeech.QUEUE_ADD :
+        TextToSpeech.QUEUE_FLUSH;
+    if (this.android_tts) {
+        let ret = this.android_tts.speak(s || "", queue, 0);
         console.log(ret);
         return (ret == 0);
     }

@@ -488,7 +488,7 @@ function JavaObject (cls, args) {
                 this.env.ExceptionClear();
             }
 
-            if (returntype[0] = 'L')
+            if (returntype[0] == 'L')
                 this.env.popFrame(rv);
             else
                 this.env.popFrame(0);

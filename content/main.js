@@ -33,7 +33,7 @@ var TalkToMe = {
             let phrase = aMessage.json.phrase;
             let bounds = aMessage.json.bounds;
 
-            tts.speak(phrase);
+            window.tts.speakContent(phrase);
             this._highlighter.highlight(bounds);
         } catch (e) {
             console.log ("Error::receiveMessage: " + e);
