@@ -76,6 +76,7 @@ TextToSpeech.prototype.speakContent = function (s) {
     let queue = (this._dont_interrupt) ?
         TextToSpeech.QUEUE_ADD :
         TextToSpeech.QUEUE_FLUSH;
+    this._dont_interrupt = false;
     if (this.android_tts) {
         let ret = this.android_tts.speak(s || "", queue, 0);
         console.log(ret);

@@ -12,11 +12,11 @@ function DOMWalker(content, newNodeFunc) {
     this.content = content;
     this.docRoot = null;
     this.currentNode = null;
-    this.getDocRoot (this.newNodeFunc);
 }
 
 // borrowed from a11y mochitests.
 DOMWalker.prototype.getDocRoot = function(onLoadFunc) {
+    onLoadFunc = onLoadFunc || this.newNodeFunc;
     function getDocRootClosure (self, onLoadFunc) {
         return function () {
             try {
@@ -34,7 +34,7 @@ DOMWalker.prototype.getDocRoot = function(onLoadFunc) {
                 // printTree (self.docRoot);
                 
                 if (onLoadFunc)
-                    onLoadFunc(self.currentNode);
+                    onLoadFunc(self.currentNode, "onload");
             } catch (e) {
                 console.printException(e);
             }
@@ -133,7 +133,7 @@ DOMWalker.prototype._doWalk = function (sibling) {
     if (obj) {
         this.currentNode = obj;
         if (this.newNodeFunc)
-            this.newNodeFunc(this.currentNode);
+            this.newNodeFunc(this.currentNode, "walked");
     } else {
         console.warning("No new node.");
     }
@@ -181,7 +181,7 @@ DOMWalker.prototype.navigateToPoint = function (x, y) {
             if (child != this.currentNode) {
                 this.currentNode = child;
                 if (this.newNodeFunc)
-                    this.newNodeFunc(this.currentNode);
+                    this.newNodeFunc(this.currentNode, "atpoint");
             }
             return;
         }

@@ -41,19 +41,22 @@ addMessageListener("TalkToMe:Activate", function (message) {
 });
 
 function contentLoadedHandler (e) {
-    domWalker = new DOMWalker(
-        content,
-        function (currentNode) {
-    sendAsyncMessage("TalkToMe:Speak",
-                     { phrase: accToPhrase(currentNode),
-                       bounds: accToRect(
-                           content.window.pageXOffset,
-                           content.window.pageYOffset,
-                           currentNode,
-                           // TODO: must be a better way to know if we are local.
-                           (content.location == "about:home")) 
-                     });
-        });
+    domWalker = new DOMWalker(content);
+    domWalker.newNodeFunc = function (currentNode, reason) {
+        console.log(reason);
+        if (reason == "atpoint")
+            sendAsyncMessage("TalkToMe:Tick");
+        sendAsyncMessage("TalkToMe:Speak",
+                         { phrase: accToPhrase(currentNode),
+                           bounds: accToRect(
+                               content.window.pageXOffset,
+                               content.window.pageYOffset,
+                               currentNode,
+                               // TODO: must be a better way to know if we are local.
+                               (content.location == "about:home")) 
+                         });
+    };
+    domWalker.getDocRoot ();
 }
 
 function navigateHandler(message) {

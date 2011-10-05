@@ -18,7 +18,10 @@ var TalkToMe = {
 
         window.messageManager.loadFrameScript(
             "resource://talktome/content/content-script.js", true);
-        window.messageManager.addMessageListener("TalkToMe:Speak", this);
+        window.messageManager.addMessageListener("TalkToMe:Speak",
+                                                 this.speakHandler(this));
+        window.messageManager.addMessageListener("TalkToMe:Tick",
+                                                 this.tickHandler(this));
     },
 
     onUIReady : function(aEvent) {
@@ -28,16 +31,25 @@ var TalkToMe = {
     onUIReadyDelayed : function(aEvent) {
     },
 
-    receiveMessage: function(aMessage) {
-        try {
-            let phrase = aMessage.json.phrase;
-            let bounds = aMessage.json.bounds;
+    tickHandler: function(self) {
+        return function (aMessage) {
+            console.log("tick");
+            window.tts.playTick();
+        };
+    },
 
-            window.tts.speakContent(phrase);
-            this._highlighter.highlight(bounds);
-        } catch (e) {
-            console.log ("Error::receiveMessage: " + e);
-        }
+    speakHandler: function(self) {
+        return function (aMessage) {
+            try {
+                let phrase = aMessage.json.phrase;
+                let bounds = aMessage.json.bounds;
+            
+                window.tts.speakContent(phrase);
+                self._highlighter.highlight(bounds);
+            } catch (e) {
+                console.log ("Error::receiveMessage: " + e);
+            }
+        };
     }
 }
 
