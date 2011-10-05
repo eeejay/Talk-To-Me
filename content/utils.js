@@ -9,10 +9,6 @@ var Ci = Components.interfaces;
 var gAccRetrieval = Cc["@mozilla.org/accessibleRetrieval;1"]
     .getService(Ci.nsIAccessibleRetrieval);
 
-var _interestingRoles = [Ci.nsIAccessibleRole.ROLE_PUSHBUTTON,
-                         Ci.nsIAccessibleRole.ROLE_GRAPHIC,
-                         Ci.nsIAccessibleRole.ROLE_LINK];
-
 function accToRect (offsetx, offsety, acc, islocal) {
     if (!acc) // Bady bad
         return {x: 0, y: 0, w: 0, h: 0};
@@ -44,19 +40,15 @@ function accToPhrase (acc) {
     if (!acc) // Grave error
         return "";
 
-    let accOfInterest = acc;
-    let phrase = acc.name;
+    let phrase = [];
 
-    while (accOfInterest) {
-        if (_interestingRoles.indexOf(accOfInterest.role) >= 0)
-            break;
-        accOfInterest = accOfInterest.parent;
-    }
+    if (acc.name)
+        phrase.push(acc.name);
 
-    if (accOfInterest)
-        phrase += " " + gAccRetrieval.getStringRole(accOfInterest.role);
+    if (acc.role != Ci.nsIAccessibleRole.ROLE_TEXT_LEAF)
+        phrase.push(gAccRetrieval.getStringRole(acc.role));
 
-    return phrase;
+    return phrase.join(" ");
 }
 
 function accToString (acc) {

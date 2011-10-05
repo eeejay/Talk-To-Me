@@ -47,8 +47,9 @@ DOMWalker.prototype.getDocRoot = function(onLoadFunc) {
 
 DOMWalker.prototype._isItemOfInterest = function (obj) {
     return ((obj.name && obj.name.trim() &&
-             obj.role == Ci.nsIAccessibleRole.ROLE_TEXT_LEAF ||
-             obj.role == Ci.nsIAccessibleRole.ROLE_GRAPHIC) ||
+             obj.role == Ci.nsIAccessibleRole.ROLE_TEXT_LEAF) ||
+            obj.role == Ci.nsIAccessibleRole.ROLE_LINK ||
+            obj.role == Ci.nsIAccessibleRole.ROLE_GRAPHIC ||
             obj.role == Ci.nsIAccessibleRole.ROLE_ENTRY ||
             obj.role == Ci.nsIAccessibleRole.ROLE_CHECKBUTTON ||
             obj.role == Ci.nsIAccessibleRole.ROLE_RADIOBUTTON ||
