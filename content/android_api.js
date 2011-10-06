@@ -90,7 +90,12 @@ var JNINativeInterface = new ctypes.StructType(
                                             jclass,
                                             ctypes.char.ptr,
                                             ctypes.char.ptr]).ptr},
-     {CallObjectMethod: ctypes.voidptr_t},
+     {CallObjectMethod: new ctypes.FunctionType(ctypes.default_abi,
+                                                jobject,
+                                                [ctypes.voidptr_t,
+                                                 jobject,
+                                                 jmethodid,
+                                                 "..."]).ptr},
      {CallObjectMethodV: ctypes.voidptr_t},
      {CallObjectMethodA: ctypes.voidptr_t},
      {CallBooleanMethod: new ctypes.FunctionType(ctypes.default_abi,
@@ -251,7 +256,10 @@ var JNINativeInterface = new ctypes.StructType(
                                             jobject,
                                             [ctypes.voidptr_t,
                                              ctypes.char.ptr]).ptr},
-     {GetStringUTFLength: ctypes.voidptr_t},
+     {GetStringUTFLength: new ctypes.FunctionType(ctypes.default_abi,
+                                                  ctypes.int32_t,
+                                                  [ctypes.voidptr_t,
+                                                   jobject]).ptr},
      {GetStringUTFChars: ctypes.voidptr_t},
      {ReleaseStringUTFChars: ctypes.voidptr_t},
      {GetArrayLength: ctypes.voidptr_t},
@@ -304,7 +312,13 @@ var JNINativeInterface = new ctypes.StructType(
      {MonitorExit: ctypes.voidptr_t},
      {GetJavaVM: ctypes.voidptr_t},
      {GetStringRegion: ctypes.voidptr_t},
-     {GetStringUTFRegion: ctypes.voidptr_t},
+     {GetStringUTFRegion: new ctypes.FunctionType(ctypes.default_abi,
+                                                  ctypes.void_t,
+                                                  [ctypes.voidptr_t,
+                                                   jobject,
+                                                   ctypes.int32_t,
+                                                   ctypes.int32_t,
+                                                   ctypes.char.ptr]).ptr},
      {GetPrimitiveArrayCritical: ctypes.voidptr_t},
      {ReleasePrimitiveArrayCritical: ctypes.voidptr_t},
      {GetStringCritical: ctypes.voidptr_t},
@@ -434,7 +448,8 @@ JavaClass.prototype.newObject = function () {
 var _returntypes = {
     V: "CallVoidMethod",
     Z: "CallBooleanMethod",
-    I: "CallIntMethod"
+    I: "CallIntMethod",
+    L: "CallObjectMethod"
 }
 
 function JavaObject () {
@@ -500,7 +515,7 @@ JavaObject.prototype._createMethods = function () {
                 i++;
             }
 
-            let rv = this.env[_returntypes[returntype]].apply(this.env, _args);
+            let rv = this.env[_returntypes[returntype[0]]].apply(this.env, _args);
 
             let exc = this.env.ExceptionOccurred();
 
@@ -509,7 +524,15 @@ JavaObject.prototype._createMethods = function () {
                 this.env.ExceptionClear();
             }
 
-            if (returntype[0] == 'L')
+            if (returntype == "Ljava/lang/String;") {
+                let ln = this.env.GetStringUTFLength(rv);
+                let _chars = ctypes.char.array(ln);
+                let chars = _chars();
+                this.env.GetStringUTFRegion(rv, 0, ln, chars);
+                rv = chars.readString();
+            }
+
+            if (returntype[0] == 'L' && returntype != "Ljava/lang/String;")
                 this.env.popFrame(rv);
             else
                 this.env.popFrame(0);
