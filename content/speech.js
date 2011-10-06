@@ -54,7 +54,8 @@ TextToSpeech.prototype._get_android_tts = function () {
         }
     );
 
-    let android_tts = tts.newObject(this.jenv.app_ctx, new ctypes.voidptr_t(0));
+    let android_tts = tts.newObject(this.jenv.app_ctx.jobj,
+                                    new ctypes.voidptr_t(0));
 
     this.jenv.popFrame(android_tts.jobj);
 

@@ -391,8 +391,15 @@ JavaEnvironment.prototype._getAppContext = function () {
     let app = this.getClass("org/mozilla/gecko/GeckoApp", {});
     let fid = this.GetStaticFieldID(app.jcls, "mAppContext",
                                          "Lorg/mozilla/gecko/GeckoApp;");
-    let ctx = this.GetStaticObjectField(app.jcls, fid);
-    this.popFrame(ctx);
+    let jctx = this.GetStaticObjectField(app.jcls, fid);
+    this.popFrame(jctx);
+    let ctx = new JavaObject();
+    ctx.fromInstanceInit(this, jctx, 
+                         {methods: {
+                             getDir: "(Ljava/lang/String;I)Ljava/io/File;"
+                         }
+                         }
+                        );             
     return ctx;
 }
 
