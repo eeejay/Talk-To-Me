@@ -1,7 +1,7 @@
 Components.utils.import("resource://gre/modules/ctypes.jsm")
 Components.utils.import("resource://talktome/content/console.js");
 
-var EXPORTED_SYMBOLS = ["JavaEnvironment"];
+var EXPORTED_SYMBOLS = ["JavaEnvironment", "JavaObject"];
 
 var libxul = ctypes.open("libxul.so");
 
@@ -386,7 +386,6 @@ JavaEnvironment.prototype._bindFunctions = function () {
     }
 }
 
-
 JavaEnvironment.prototype._getAppContext = function () {
     this.pushFrame();
     let app = this.getClass("org/mozilla/gecko/GeckoApp", {});
@@ -420,7 +419,9 @@ function JavaClass(env, name, iface) {
 }
 
 JavaClass.prototype.newObject = function () {
-    return new JavaObject(this, arguments);
+    let obj = new JavaObject();
+    obj.constructInit(this, arguments);
+    return obj;
 }
 
 var _returntypes = {
@@ -429,14 +430,27 @@ var _returntypes = {
     I: "CallIntMethod"
 }
 
-function JavaObject (cls, args) {
+function JavaObject () {
+}
+
+JavaObject.prototype.constructInit = function (cls, args) {
     let methodid = cls.env.GetMethodID(cls.jcls, "<init>", cls.iface.constructor);
     let _args = [cls.jcls, methodid];
     _args.push.apply(_args, args);
     this.jobj = cls.env.NewObject.apply(cls.env, _args);
     this.env = cls.env;
     this.iface = cls.iface;
+    this._createMethods();
+};
 
+JavaObject.prototype.fromInstanceInit = function (env, jobj, iface) {
+    this.jobj = jobj;
+    this.env = env;
+    this.iface = iface;
+    this._createMethods();
+};
+
+JavaObject.prototype._createMethods = function () {
     for (let attr in this.iface.methods) {
         let _mname = attr;
         this[_mname] = function () {
@@ -496,4 +510,4 @@ function JavaObject (cls, args) {
             return rv;
         }
     }
-}
+};
