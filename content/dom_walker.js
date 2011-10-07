@@ -1,6 +1,7 @@
 var EXPORTED_SYMBOLS = ["DOMWalker"];
 
 Components.utils.import("resource://talktome/content/accessible_utils.js");
+Components.utils.import("resource://talktome/content/closure_utils.js");
 Components.utils.import("resource://talktome/content/console.js");
 
 var Ci = Components.interfaces;
@@ -17,31 +18,24 @@ function DOMWalker(content, newNodeFunc) {
 // borrowed from a11y mochitests.
 DOMWalker.prototype.getDocRoot = function(onLoadFunc) {
     onLoadFunc = onLoadFunc || this.newNodeFunc;
-    function getDocRootClosure (self, onLoadFunc) {
-        return function () {
-            try {
-                let docRoot = getAccessible(self.content.document);
-
-                let state = {};
-                docRoot.getState(state, {});
-                if (state.value & STATE_BUSY)
-                    return self.getDocRoot (onLoadFunc); // Try again
-                
-                self.docRoot = docRoot;
-                self.currentNode = self._searchSubtreeDepth(
-                    self.docRoot, self._isItemOfInterest);
-
-                // printTree (self.docRoot);
-                
-                if (onLoadFunc)
-                    onLoadFunc(self.currentNode, "onload");
-            } catch (e) {
-                console.printException(e);
-            }
-        };
+    function getDocRootInner() {
+        let docRoot = getAccessible(this.content.document);
+        
+        let state = {};
+        docRoot.getState(state, {});
+        if (state.value & STATE_BUSY)
+            return this.getDocRoot (onLoadFunc); // Try again
+        
+        this.docRoot = docRoot;
+        this.currentNode = this._searchSubtreeDepth(
+            this.docRoot, this._isItemOfInterest);
+        
+        // printTree (this.docRoot);
+        
+        if (onLoadFunc)
+            onLoadFunc(this.currentNode, "onload");
     }
-
-    this.content.setTimeout (getDocRootClosure (this, onLoadFunc), 0);
+    this.content.setTimeout (Callback(getDocRootInner, this), 0);
 };
 
 
@@ -115,9 +109,8 @@ DOMWalker.prototype._doWalk = function (sibling) {
     try {
         nextNode = this._nextNode(this.currentNode, sibling);
     } catch (e) {
-        this.getDocRoot(function (self) {
-            return function (currentNode) {self._doWalk(sibling);};
-        } (this));
+        this.getDocRoot(
+            Callback(function (currentNode) {this._doWalk(sibling);}, this));
         return;
     }
 

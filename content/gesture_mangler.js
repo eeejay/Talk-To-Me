@@ -1,5 +1,6 @@
 Components.utils.import("resource://talktome/content/console.js");
 Components.utils.import("resource://gre/modules/Geometry.jsm");
+Components.utils.import("resource://talktome/content/closure_utils.js");
 
 EXPORTED_SYMBOLS = ["GestureMangler"];
 
@@ -35,34 +36,17 @@ GestureMangler.prototype._setHandler = function (module, handler) {
 GestureMangler.prototype.enable = function () {
     let w = this.window.wrappedJSObject;
 
-    this._setHandler(w.MouseModule, function (gesturemangler) {
-        return function (e) {
-            let rv = false;
-            
-            try {
-                rv = GestureMangler.prototype.mouseHandler.apply(gesturemangler, [e]);
-            } catch (e) {
-                console.log("Error::mouseHandler: " + e);
-            }
-            
-            if (!rv)
-                gesturemangler._origMouseHandler(e);
-        };
-    }(this));
-    this._setHandler(w.GestureModule, function (gesturemangler) {
-        return function (e) {
-            let rv = false;
-            
-            try {
-                rv = GestureMangler.prototype.gestureHandler.apply(gesturemangler, [e]);
-            } catch (e) {
-                console.log("Error::gestureHandler: " + e);
-            }
-            
-            if (!rv)
-                gesturemangler._origGestureHandler(e);
-        };
-    }(this));
+    this._setHandler(w.MouseModule,
+                     Callback(function (e) {
+                         if (!this.mouseHandler(e))
+                             this._origMouseHandler(e);
+                     }, this));
+
+    this._setHandler(w.GestureModule,
+                     Callback(function (e) {
+                         if (!this.gestureHandler(e))
+                             this._origGestureHandler(e);
+                     }, this));
 };
 
 GestureMangler.prototype.disable = function () {
@@ -204,14 +188,8 @@ GestureEventGenerator.prototype = {
         this._lastY = y;
         this._realDistance = 0;
         this.doingMozGesture = false;
-        this._dwellTimeout = this.window.setTimeout(function (self) {
-            return function () {
-                try {
-                    GestureEventGenerator.prototype._dwellEmit.apply(self, []);
-                } catch (e) {
-                    console.printException(e);
-                }
-            };}(this), DWELL_MIN_TIME);
+        this._dwellTimeout = this.window.setTimeout(
+            Callback(this._dwellEmit, this), DWELL_MIN_TIME);
     },
     up: function (timestamp, x, y) {
         this.window.clearTimeout(this._dwellTimeout);
@@ -290,13 +268,7 @@ GestureEventGenerator.prototype = {
         if (this._dwellTimeout == 0)
             return;
 
-        this._dwellTimeout = this.window.setTimeout(function (self) {
-            return function () {
-                try {
-                    GestureEventGenerator.prototype._dwellEmit.apply(self, []);
-                } catch (e) {
-                    console.printException(e);
-                }
-            };}(this), DWELL_REPEAT_DELAY);
+        this._dwellTimeout = this.window.setTimeout(
+            Callback(this._dwellEmit, this), DWELL_REPEAT_DELAY);
     }
 };

@@ -79,11 +79,14 @@ Console.prototype.dumpObj = function (obj, dump_const, ommit_empty) {
 }
 
 Console.prototype.printException = function (exc) {
-    if (exc.message) {
-        this.log ("Exception: " + exc.message);
-        this.log (exc.filename + ":" + exc.lineNumber + ":" + exc.columnNumber);
-    } else {
-        this.log ("Exception: " + exc);
+    if (exc.message)
+        this.log ("Error: " + exc.message);
+    else
+        this.log ("Error: " + exc);
+
+    if (exc.fileName) {
+        let filename = exc.fileName.split(' -> ');
+        this.log (" " + filename[filename.length - 1] + ":" + exc.lineNumber);
     }
 }
 

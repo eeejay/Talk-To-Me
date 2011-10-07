@@ -3,6 +3,7 @@ Components.utils.import("resource://talktome/content/console.js");
 try {
     Components.utils.import("resource://talktome/content/dom_walker.js");
     Components.utils.import("resource://talktome/content/accessible_utils.js");
+    Components.utils.import("resource://talktome/content/closure_utils.js");
 } catch (e) {
     console.printException(e);
 }
@@ -10,35 +11,13 @@ try {
 var Cc = Components.classes;
 var Ci = Components.interfaces;
 
-var gAccRetrieval;
-
 var domWalker = null;
 
 console.log("content-script.js");
 
-addEventListener('DOMContentLoaded', function (e) {
-    try {
-        contentLoadedHandler (e);
-    } catch (e) {
-        console.printException(e);
-    }
-});
-
-addMessageListener("TalkToMe:Navigate", function (message) {
-    try {
-        navigateHandler (message);
-    } catch (e) {
-        console.printException(e);
-    }
-});
-
-addMessageListener("TalkToMe:Activate", function (message) {
-    try {
-        activateHandler (message);
-    } catch (e) {
-        console.printException(e);
-    }
-});
+addEventListener('DOMContentLoaded', Callback(contentLoadedHandler));
+addMessageListener("TalkToMe:Navigate", Callback(navigateHandler));
+addMessageListener("TalkToMe:Activate", Callback(activateHandler));
 
 function contentLoadedHandler (e) {
     domWalker = new DOMWalker(content);

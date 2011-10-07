@@ -1,24 +1,25 @@
 Components.utils.import("resource://talktome/content/console.js");
+Components.utils.import("resource://talktome/content/closure_utils.js");
 
 EXPORTED_SYMBOLS=["InputManager"];
 
 function InputManager (window) {
-    window.addEventListener('keypress', this.keypressHandler, false);
-    window.addEventListener('TalkToMe::Swipe', this.swipeHandler, false);
-    window.addEventListener('TalkToMe::Tap', this.tapHandler, false);
-    window.addEventListener('TalkToMe::Dwell', this.dwellHandler, false);
+    window.addEventListener('keypress',
+                            Callback(this.keypressHandler), false);
+    window.addEventListener('TalkToMe::Swipe',
+                            Callback(this.swipeHandler),false);
+    window.addEventListener('TalkToMe::Tap',
+                            Callback(this.tapHandler), false);
+    window.addEventListener('TalkToMe::Dwell',
+                            Callback(this.dwellHandler), false);
 }
 
 InputManager.prototype.dwellHandler = function (e) {
     // navigate to item under finger
-    try {
-        let browser = this.window.Browser.selectedTab.browser;
-        let d = e.detail[e.detail.length-1];
-        browser.messageManager.sendAsyncMessage(
-            "TalkToMe:Navigate", browser.transformClientToBrowser (d.x, d.y));
-    } catch (e) {
-        console.printException(e);
-    }
+    let browser = this.window.Browser.selectedTab.browser;
+    let d = e.detail[e.detail.length-1];
+    browser.messageManager.sendAsyncMessage(
+        "TalkToMe:Navigate", browser.transformClientToBrowser (d.x, d.y));
 };
 
 InputManager.prototype.tapHandler = function (e) {
