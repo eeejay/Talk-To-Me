@@ -34,6 +34,7 @@ function initialize_tts (newInstall, installPath) {
     console.log("initialize_tts");
     Cu.import("resource://talktome/content/platform_utils.js");
     Cu.import("resource://talktome/content/speech.js");
+    Cu.import("resource://talktome/content/closure_utils.js");
 
     let mediaPath = installPath.clone();
     mediaPath.append('media');
@@ -54,9 +55,7 @@ function initialize_tts (newInstall, installPath) {
                             QueryInterface(Components.interfaces.nsILocalFile));
             PlatformUtils.asyncFilesCopy (
                 _files, mediaPath,
-                function () {
-                    tts = new TextToSpeech(mediaPath, true);
-                });
+                Callback(function () {tts = new TextToSpeech(mediaPath, true);}));
         } else {
             tts = new TextToSpeech(mediaPath, true);
         }
