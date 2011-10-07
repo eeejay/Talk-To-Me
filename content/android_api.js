@@ -468,6 +468,7 @@ JavaObject.prototype._createMethods = function () {
     for (let attr in this.iface.methods) {
         let _mname = attr;
         this[_mname] = function () {
+            JavaEnvironment.pushFrame();
 
             let signature = this.iface.methods[_mname];
             let m = _java_sig_patt.exec(signature);
@@ -483,8 +484,6 @@ JavaObject.prototype._createMethods = function () {
 
                 if (_arg[0][0] == "[")
                     throw _mname + ": arrays are not supported yet";
-
-                JavaEnvironment.pushFrame();
 
                 if (_arg[0] == "Z" || _arg[0] == "C")
                     _args.push(ctypes.uint8_t(arguments[i]));
