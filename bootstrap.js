@@ -31,6 +31,7 @@ function loadIntoWindow (aWindow) {
 }
 
 function initialize_tts (newInstall, installPath) {
+    console.log("initialize_tts");
     Cu.import("resource://talktome/content/platform_utils.js");
     Cu.import("resource://talktome/content/speech.js");
 
@@ -60,7 +61,7 @@ function initialize_tts (newInstall, installPath) {
             tts = new TextToSpeech(mediaPath, true);
         }
     } else {
-        tts = new TextToSpeech(mediaPath, true);
+        tts = new TextToSpeech(mediaPath, PlatformUtils.isAndroid());
     }
 }
 
