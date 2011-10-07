@@ -376,7 +376,6 @@ var JavaEnvironment = {
         this._javaenv = GetJNIForThread();
         this.jenv = this._javaenv.contents.contents;
         this._bindFunctions ();
-        this.app_ctx = this._getAppContext ();
     },
     _bindFunctions: function () {
         for (let i in JNINativeInterface.fields) {
@@ -393,7 +392,7 @@ var JavaEnvironment = {
             }
         }
     },
-    _getAppContext: function () {
+    getAppContext: function () {
         this.pushFrame();
         let app = this.getClass("org/mozilla/gecko/GeckoApp", {});
         let fid = this.GetStaticFieldID(app.jcls, "mAppContext",

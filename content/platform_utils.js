@@ -13,7 +13,7 @@ EXPORTED_SYMBOLS = ["PlatformUtils"]
 var PlatformUtils = {
     getAppDir: function (name) {
         Cu.import("resource://talktome/content/android_api.js");
-        let _jfile = JavaEnvironment.app_ctx.getDir(name, 1);
+        let _jfile = JavaEnvironment.getAppContext().getDir(name, 1);
         let jfile = new JavaObject ();
         jfile.fromInstanceInit(
             _jfile,
