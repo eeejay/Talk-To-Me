@@ -10,6 +10,8 @@ var loader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
 
 var tts = null;
 
+var externalMediaPath = null;
+
 /* From http://starkravingfinkle.org/blog/2011/01/bootstrap-jones-adventures-in-restartless-add-ons/ */
 
 var windowListener = {
@@ -42,6 +44,7 @@ function initialize_tts (newInstall, installPath) {
            We need to copy them to a readable location. */
         let mediaFiles = mediaPath.directoryEntries;
         mediaPath = PlatformUtils.getAppDir("TalkToMe_media");
+        externalMediaPath = mediaPath.clone();
         if (newInstall) {
             // Install media files.
             let _files = [];
@@ -94,9 +97,19 @@ function install (data, reason) { }
 
 function shutdown (data, reason) {
     tts.shutdown();
-    if (aReason == APP_SHUTDOWN) return;
 
-    let resource = Services.io.getProtocolHandler("resource").
-        QueryInterface(Ci.nsIResProtocolHandler);
-    resource.setSubstitution(data.id.substring(0, data.id.indexOf('@')), null);
+    try {
+        let resource = Services.io.getProtocolHandler("resource").
+            QueryInterface(Ci.nsIResProtocolHandler);
+        resource.setSubstitution(data.id.substring(0, data.id.indexOf('@')), null);
+        if (reason != APP_SHUTDOWN || reason != ADDON_DISABLE) {
+            console.log("Uninstalling");
+            if (PlatformUtils.isAndroid() && externalMediaPath) {
+                console.log("Removing " + externalMediaPath.path);
+                externalMediaPath.remove(true);
+            }
+        }
+    } catch (e) {
+        console.printException(e);
+    }
 }
