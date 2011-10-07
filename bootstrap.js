@@ -34,7 +34,31 @@ function initialize_tts (newInstall, installPath) {
 
     let mediaPath = installPath.clone();
     mediaPath.append('media');
-    tts = new TextToSpeech(mediaPath, PlatformUtils.isAndroid());
+    
+    if (PlatformUtils.isAndroid() &&
+        !PlatformUtils.pathIsWorldReadable(mediaPath)) {
+        /* Due to the security model on android, the extension is not
+           world-readable, so the tts service cannot load the earcon files.
+           We need to copy them to a readable location. */
+        let mediaFiles = mediaPath.directoryEntries;
+        mediaPath = PlatformUtils.getAppDir("TalkToMe_media");
+        if (newInstall) {
+            // Install media files.
+            let _files = [];
+            while (mediaFiles.hasMoreElements())
+                _files.push(mediaFiles.getNext().
+                            QueryInterface(Components.interfaces.nsILocalFile));
+            PlatformUtils.asyncFilesCopy (
+                _files, mediaPath,
+                function () {
+                    tts = new TextToSpeech(mediaPath, true);
+                });
+        } else {
+            tts = new TextToSpeech(mediaPath, true);
+        }
+    } else {
+        tts = new TextToSpeech(mediaPath, true);
+    }
 }
 
 function startup (data, reason) {
