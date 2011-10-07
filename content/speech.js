@@ -4,39 +4,27 @@ const Ci = Components.interfaces;
 const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/ctypes.jsm")
-Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://talktome/content/console.js");
 
-var using_android = true;
+function TextToSpeech(mediaPath, usingAndroid) {
+    this.mediaPath = mediaPath;
 
-try {
-    Cu.import("resource://talktome/content/android_api.js");
-} catch (e) {
-    console.log("Error loading android_api.js");
-    console.printException(e);
-    using_android = false;
-}
-
-function TextToSpeech() {
-    if (using_android)
+    if (usingAndroid)
         this.android_tts = this._get_android_tts();
     
     this._registered_earcons = false;
 }
 
 TextToSpeech.prototype._register_earcons = function () {
-    let resource = Services.io.getProtocolHandler("resource").
-        QueryInterface(Ci.nsIResProtocolHandler);
-    let uri = Services.io.newURI("resource://talktome/media/tick.wav",
-                                 null, null);
-    let tick_path = resource.resolveURI(uri);
-
-    let rv = this.android_tts.addEarcon("[tick]", tick_path);
-
-    console.log ("Register earcons: " + ((rv == 0) ? "success" : "fail"));
+    let _path = this.mediaPath.clone();
+    _path.append('tick.wav');
+    let rv = this.android_tts.addEarcon("[tick]", _path.path);
+    console.log ("Adding earcon: " + _path.path +
+                 ((rv == 0) ? " (success)" : " (fail)"));
 }
 
 TextToSpeech.prototype._get_android_tts = function () {
+    Cu.import("resource://talktome/content/android_api.js");
 
     JavaEnvironment.pushFrame();
 

@@ -28,9 +28,17 @@ function loadIntoWindow (aWindow) {
     loader.loadSubScript("resource://talktome/content/main.js", _globals);
 }
 
+function initialize_tts (newInstall, installPath) {
+    Cu.import("resource://talktome/content/platform_utils.js");
+    Cu.import("resource://talktome/content/speech.js");
+
+    let mediaPath = installPath.clone();
+    mediaPath.append('media');
+    tts = new TextToSpeech(mediaPath, PlatformUtils.isAndroid());
+}
+
 function startup (data, reason) {
     dump ("started! " + data.id.substring(0, data.id.indexOf('@')) + "\n");
-
     let resource = Services.io.getProtocolHandler("resource").
         QueryInterface(Ci.nsIResProtocolHandler);
 
@@ -38,14 +46,14 @@ function startup (data, reason) {
     resource.setSubstitution(data.id.substring(0, data.id.indexOf('@')), alias);
 
     Cu.import("resource://talktome/content/console.js");
-
+    
     try {
-        Cu.import("resource://talktome/content/speech.js");
-        tts = new TextToSpeech();
+        initialize_tts ((reason == ADDON_INSTALL ||
+                         reason == ADDON_UPGRADE ||
+                         reason == ADDON_DOWNGRADE), data.installPath);
     } catch (e) {
-        console.log ("FAILED TO LOAD TTS: " + e + "\n");
+        console.printException (e);
     }
-
 
     // Load into any existing windows
     let enumerator = Services.wm.getEnumerator("navigator:browser");
