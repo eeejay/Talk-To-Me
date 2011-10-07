@@ -2,7 +2,7 @@ Components.utils.import("resource://talktome/content/console.js");
 
 try {
     Components.utils.import("resource://talktome/content/dom_walker.js");
-    Components.utils.import("resource://talktome/content/utils.js");
+    Components.utils.import("resource://talktome/content/accessible_utils.js");
 } catch (e) {
     console.printException(e);
 }

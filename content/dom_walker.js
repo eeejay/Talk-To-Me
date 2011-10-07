@@ -1,6 +1,6 @@
 var EXPORTED_SYMBOLS = ["DOMWalker"];
 
-Components.utils.import("resource://talktome/content/utils.js");
+Components.utils.import("resource://talktome/content/accessible_utils.js");
 Components.utils.import("resource://talktome/content/console.js");
 
 var Ci = Components.interfaces;
