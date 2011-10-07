@@ -98,16 +98,17 @@ function install (data, reason) { }
 function shutdown (data, reason) {
     tts.shutdown();
 
+    let resource = Services.io.getProtocolHandler("resource").
+        QueryInterface(Ci.nsIResProtocolHandler);
+    resource.setSubstitution(data.id.substring(0, data.id.indexOf('@')), null);
+}
+
+function uninstall (reason, data) {
+    console.log("Uninstalling");
     try {
-        let resource = Services.io.getProtocolHandler("resource").
-            QueryInterface(Ci.nsIResProtocolHandler);
-        resource.setSubstitution(data.id.substring(0, data.id.indexOf('@')), null);
-        if (reason != APP_SHUTDOWN || reason != ADDON_DISABLE) {
-            console.log("Uninstalling");
-            if (PlatformUtils.isAndroid() && externalMediaPath) {
-                console.log("Removing " + externalMediaPath.path);
-                externalMediaPath.remove(true);
-            }
+        if (PlatformUtils.isAndroid() && externalMediaPath) {
+            console.log("Removing " + externalMediaPath.path);
+            externalMediaPath.remove(true);
         }
     } catch (e) {
         console.printException(e);
