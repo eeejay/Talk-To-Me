@@ -402,7 +402,8 @@ var JavaEnvironment = {
         let ctx = new JavaObject();
         ctx.fromInstanceInit(jctx, 
                              {methods: {
-                                 getDir: "(Ljava/lang/String;I)Ljava/io/File;"
+                                 getDir: "(Ljava/lang/String;I)Ljava/io/File;",
+                                 getApplication: "()Landroid/app/Application;"
                              }
                              }
                             );

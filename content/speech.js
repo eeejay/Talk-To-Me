@@ -41,8 +41,9 @@ TextToSpeech.prototype._get_android_tts = function () {
         }
     );
 
-    let android_tts = tts.newObject(JavaEnvironment.getAppContext().jobj,
-                                    new ctypes.voidptr_t(0));
+    let android_tts = tts.newObject(
+        JavaEnvironment.getAppContext().getApplication(),
+        new ctypes.voidptr_t(0));
 
     JavaEnvironment.popFrame(android_tts.jobj);
 
