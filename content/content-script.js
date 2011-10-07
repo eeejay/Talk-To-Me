@@ -49,7 +49,7 @@ function navigateHandler(message) {
     } else if (message.json.x != undefined && message.json.y != undefined) {
         domWalker.navigateToPoint(message.json.x, message.json.y);
     } else {
-        throw "bad nav command"
+        throw new Error("bad nav command");
     }
 }
 
