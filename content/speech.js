@@ -37,11 +37,10 @@ TextToSpeech.prototype._register_earcons = function () {
 }
 
 TextToSpeech.prototype._get_android_tts = function () {
-    this.jenv = new JavaEnvironment();
 
-    this.jenv.pushFrame();
+    JavaEnvironment.pushFrame();
 
-    let tts = this.jenv.getClass(
+    let tts = JavaEnvironment.getClass(
         "android/speech/tts/TextToSpeech",
         {constructor: "(Landroid/content/Context;Landroid/speech/tts/TextToSpeech$OnInitListener;)V",
          methods: {
@@ -54,10 +53,10 @@ TextToSpeech.prototype._get_android_tts = function () {
         }
     );
 
-    let android_tts = tts.newObject(this.jenv.app_ctx.jobj,
+    let android_tts = tts.newObject(JavaEnvironment.app_ctx.jobj,
                                     new ctypes.voidptr_t(0));
 
-    this.jenv.popFrame(android_tts.jobj);
+    JavaEnvironment.popFrame(android_tts.jobj);
 
     return android_tts;
 }

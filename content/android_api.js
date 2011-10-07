@@ -371,104 +371,96 @@ function _apply(fn, ar) {
 var _java_sig_patt = /^\((.*?)\)(.*?)$/;
 var _java_arg_patt = /(?:\[?)(?:(?:L.*?;)|[ZBCSIJFD])/g;
 
-function JavaEnvironment(javaenv) {
-    if (javaenv)
-        this._javaenv = javaenv;
-    else
+var JavaEnvironment = {
+    init: function () {
         this._javaenv = GetJNIForThread();
-
-    this.jenv = this._javaenv.contents.contents;
-
-    this._bindFunctions ();
-
-    this.app_ctx = this._getAppContext ();
-}
-
-JavaEnvironment.prototype._bindFunctions = function () {
-    for (let i in JNINativeInterface.fields) {
-        for (let attr in JNINativeInterface.fields[i]) {
-            let field = JNINativeInterface.fields[i][attr];
-            if (field.targetType instanceof ctypes.FunctionType) {
-                let fname = attr;
-                this[fname] = function () {
-                    let _args = [this._javaenv]
-                    _args.push.apply(_args, arguments);
-                    return _apply(this.jenv[fname], _args);
+        this.jenv = this._javaenv.contents.contents;
+        this._bindFunctions ();
+        this.app_ctx = this._getAppContext ();
+    },
+    _bindFunctions: function () {
+        for (let i in JNINativeInterface.fields) {
+            for (let attr in JNINativeInterface.fields[i]) {
+                let field = JNINativeInterface.fields[i][attr];
+                if (field.targetType instanceof ctypes.FunctionType) {
+                    let fname = attr;
+                    this[fname] = function () {
+                        let _args = [this._javaenv]
+                        _args.push.apply(_args, arguments);
+                        return _apply(this.jenv[fname], _args);
+                    }
                 }
             }
         }
-    }
-}
-
-JavaEnvironment.prototype._getAppContext = function () {
-    this.pushFrame();
-    let app = this.getClass("org/mozilla/gecko/GeckoApp", {});
-    let fid = this.GetStaticFieldID(app.jcls, "mAppContext",
+    },
+    _getAppContext: function () {
+        this.pushFrame();
+        let app = this.getClass("org/mozilla/gecko/GeckoApp", {});
+        let fid = this.GetStaticFieldID(app.jcls, "mAppContext",
                                          "Lorg/mozilla/gecko/GeckoApp;");
-    let jctx = this.GetStaticObjectField(app.jcls, fid);
-    this.popFrame(jctx);
-    let ctx = new JavaObject();
-    ctx.fromInstanceInit(this, jctx, 
-                         {methods: {
-                             getDir: "(Ljava/lang/String;I)Ljava/io/File;"
-                         }
-                         }
-                        );             
-    return ctx;
-}
+        let jctx = this.GetStaticObjectField(app.jcls, fid);
+        this.popFrame(jctx);
+        let ctx = new JavaObject();
+        ctx.fromInstanceInit(jctx, 
+                             {methods: {
+                                 getDir: "(Ljava/lang/String;I)Ljava/io/File;"
+                             }
+                             }
+                            );
+        return ctx;
+    },
+    getClass: function (name, iface) {
+        return new JavaClass(name, iface);
+    },
+    pushFrame: function () {
+        return (this.PushLocalFrame(ctypes.int32_t(N_REFS)) == 0);
+    },
+    popFrame: function (ref) {
+        return (this.PopLocalFrame(ref || ctypes.voidptr_t(0)) == 0);
+    }
+};
 
-JavaEnvironment.prototype.getClass = function(name, iface) {
-    return new JavaClass(this, name, iface);
-}
-
-JavaEnvironment.prototype.pushFrame = function() {
-    return (this.PushLocalFrame(ctypes.int32_t(N_REFS)) == 0);
-}
-
-JavaEnvironment.prototype.popFrame = function(ref) {
-    return (this.PopLocalFrame(ref || ctypes.voidptr_t(0)) == 0);
-}
-
-function JavaClass(env, name, iface) {
+function JavaClass(name, iface) {
     this.iface = iface;
-    this.env = env;
-    this.jcls = env.FindClass(name);
+    this.jcls = JavaEnvironment.FindClass(name);
 
     if (this.jcls.isNull()) {
         throw "can't find class";
     }
-}
+};
 
 JavaClass.prototype.newObject = function () {
     let obj = new JavaObject();
     obj.constructInit(this, arguments);
     return obj;
-}
+};
 
 var _returntypes = {
     V: "CallVoidMethod",
     Z: "CallBooleanMethod",
     I: "CallIntMethod",
     L: "CallObjectMethod"
-}
+};
 
 function JavaObject () {
-}
+    this._placeholder = null;
+};
 
 JavaObject.prototype.constructInit = function (cls, args) {
-    let methodid = cls.env.GetMethodID(cls.jcls, "<init>", cls.iface.constructor);
+    let methodid = JavaEnvironment.GetMethodID(cls.jcls, "<init>",
+                                               cls.iface.constructor);
     let _args = [cls.jcls, methodid];
     _args.push.apply(_args, args);
-    this.jobj = cls.env.NewObject.apply(cls.env, _args);
-    this.env = cls.env;
+
+    this.jobj = JavaEnvironment.NewObject.apply(JavaEnvironment, _args);
     this.iface = cls.iface;
     this._createMethods();
 };
 
-JavaObject.prototype.fromInstanceInit = function (env, jobj, iface) {
+JavaObject.prototype.fromInstanceInit = function (jobj, iface) {
     this.jobj = jobj;
-    this.env = env;
     this.iface = iface;
+
     this._createMethods();
 };
 
@@ -480,8 +472,8 @@ JavaObject.prototype._createMethods = function () {
             let signature = this.iface.methods[_mname];
             let m = _java_sig_patt.exec(signature);
             let returntype = m[2];
-            let jcls = this.env.GetObjectClass(this.jobj);
-            let methodid = this.env.GetMethodID(jcls, _mname, signature);
+            let jcls = JavaEnvironment.GetObjectClass(this.jobj);
+            let methodid = JavaEnvironment.GetMethodID(jcls, _mname, signature);
             let _args = [this.jobj, methodid];
             let _arg;
             let i = 0;
@@ -492,7 +484,7 @@ JavaObject.prototype._createMethods = function () {
                 if (_arg[0][0] == "[")
                     throw _mname + ": arrays are not supported yet";
 
-                this.env.pushFrame();
+                JavaEnvironment.pushFrame();
 
                 if (_arg[0] == "Z" || _arg[0] == "C")
                     _args.push(ctypes.uint8_t(arguments[i]));
@@ -509,35 +501,38 @@ JavaObject.prototype._createMethods = function () {
                 else if (_arg[0] == "D")
                     _args.push(ctypes.float64_t(arguments[i]));
                 else if (_arg[0] == "Ljava/lang/String;")
-                    _args.push(this.env.NewStringUTF(arguments[i]));
+                    _args.push(JavaEnvironment.NewStringUTF(arguments[i]));
                 else
                     _args.push(ctypes.voidptr_t(arguments[i]));
                 i++;
             }
 
-            let rv = this.env[_returntypes[returntype[0]]].apply(this.env, _args);
+            let rv = JavaEnvironment[_returntypes[returntype[0]]]
+                .apply(JavaEnvironment, _args);
 
-            let exc = this.env.ExceptionOccurred();
+            let exc = JavaEnvironment.ExceptionOccurred();
 
             if (!exc.isNull()) {
-                this.env.ExceptionDescribe();
-                this.env.ExceptionClear();
+                JavaEnvironment.ExceptionDescribe();
+                JavaEnvironment.ExceptionClear();
             }
 
             if (returntype == "Ljava/lang/String;") {
-                let ln = this.env.GetStringUTFLength(rv);
+                let ln = JavaEnvironment.GetStringUTFLength(rv);
                 let _chars = ctypes.char.array(ln);
                 let chars = _chars();
-                this.env.GetStringUTFRegion(rv, 0, ln, chars);
+                JavaEnvironment.GetStringUTFRegion(rv, 0, ln, chars);
                 rv = chars.readString();
             }
 
             if (returntype[0] == 'L' && returntype != "Ljava/lang/String;")
-                this.env.popFrame(rv);
+                JavaEnvironment.popFrame(rv);
             else
-                this.env.popFrame(0);
+                JavaEnvironment.popFrame(0);
 
             return rv;
         }
     }
 };
+
+JavaEnvironment.init();
