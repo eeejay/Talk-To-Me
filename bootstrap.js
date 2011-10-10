@@ -27,7 +27,11 @@ var windowListener = {
 function loadIntoWindow (aWindow) {
     aWindow.tts = tts;
     let _globals = {window: aWindow};
-    loader.loadSubScript("resource://talktome/content/main.js", _globals);
+    try {
+        loader.loadSubScript("resource://talktome/content/main.js", _globals);
+    } catch (e) {
+        console.printException(e);
+    }
 }
 
 function initialize_tts (newInstall, installPath) {
