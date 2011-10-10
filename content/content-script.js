@@ -18,6 +18,7 @@ console.log("content-script.js");
 addEventListener('DOMContentLoaded', Callback(contentLoadedHandler));
 addMessageListener("TalkToMe:Navigate", Callback(navigateHandler));
 addMessageListener("TalkToMe:Activate", Callback(activateHandler));
+addMessageListener("TalkToMe:CurrentBounds", Callback(currentBoundsHandler));
 
 function contentLoadedHandler (e) {
     domWalker = new DOMWalker(content);
@@ -55,4 +56,14 @@ function navigateHandler(message) {
 
 function activateHandler(message) {
     domWalker.activate();
+}
+
+function currentBoundsHandler(message) {
+    let bounds = accToRect(
+        content.window.pageXOffset,
+        content.window.pageYOffset,
+        domWalker.currentNode,
+        // TODO: must be a better way to know if we are local.
+        (content.location == "about:home"));
+    sendAsyncMessage("TalkToMe:ShowBounds", { bounds: bounds });
 }

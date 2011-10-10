@@ -28,7 +28,12 @@ var TalkToMe = {
     },
 
     onUIReady : function (aEvent) {
-        this._highlighter = new Highlighter (window);
+        let highlighter = this._highlighter = new Highlighter (window);
+        // listen for events that require us to redraw the highlighter.
+        window.messageManager.addMessageListener(
+            "MozScrolledAreaChanged", Callback(this.askForBounds));
+        window.Browser.controlsScrollbox.addEventListener(
+            'scroll', Callback(this.askForBounds));
     },
 
     tickHandler: function (aMessage) {
@@ -42,6 +47,11 @@ var TalkToMe = {
 
     showBoundsHandler: function (aMessage) {
         this._highlighter.highlight(aMessage.json.bounds);
+    },
+
+    askForBounds: function () {
+        let mm = window.Browser.selectedTab.browser.messageManager;
+        mm.sendAsyncMessage("TalkToMe:CurrentBounds");
     }
 }
 
