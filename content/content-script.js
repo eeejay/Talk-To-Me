@@ -26,14 +26,14 @@ function contentLoadedHandler (e) {
         if (reason == "atpoint")
             sendAsyncMessage("TalkToMe:Tick");
         sendAsyncMessage("TalkToMe:Speak",
-                         { phrase: accToPhrase(currentNode),
-                           bounds: accToRect(
-                               content.window.pageXOffset,
-                               content.window.pageYOffset,
-                               currentNode,
-                               // TODO: must be a better way to know if we are local.
-                               (content.location == "about:home")) 
-                         });
+                         { phrase: accToPhrase(currentNode) });
+        let bounds = accToRect(
+            content.window.pageXOffset,
+            content.window.pageYOffset,
+            currentNode,
+            // TODO: must be a better way to know if we are local.
+            (content.location == "about:home"));
+        sendAsyncMessage("TalkToMe:ShowBounds", { bounds: bounds });
     };
     domWalker.getDocRoot ();
 }

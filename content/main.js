@@ -22,6 +22,8 @@ var TalkToMe = {
         window.messageManager.addMessageListener(
             "TalkToMe:Speak", Callback(this.speakHandler,this));
         window.messageManager.addMessageListener(
+            "TalkToMe:ShowBounds", Callback(this.showBoundsHandler,this));
+        window.messageManager.addMessageListener(
             "TalkToMe:Tick", Callback(this.tickHandler,this));
     },
 
@@ -35,11 +37,11 @@ var TalkToMe = {
     },
 
     speakHandler: function (aMessage) {
-        let phrase = aMessage.json.phrase;
-        let bounds = aMessage.json.bounds;
-            
-        window.tts.speakContent(phrase);
-        this._highlighter.highlight(bounds);
+        window.tts.speakContent(aMessage.json.phrase);
+    },
+
+    showBoundsHandler: function (aMessage) {
+        this._highlighter.highlight(aMessage.json.bounds);
     }
 }
 
