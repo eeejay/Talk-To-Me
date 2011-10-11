@@ -88,6 +88,7 @@ InputManager.prototype.swipeHandler = function (e) {
 };
 
 InputManager.prototype.keypressHandler = function (e) {
+    if (e.target.nodeName == "html") return;
     if (e.altKey) {
         let mm = this.window.Browser.selectedTab.browser.messageManager;
         switch (e.keyCode) {
