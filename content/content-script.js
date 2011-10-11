@@ -59,6 +59,8 @@ function activateHandler(message) {
 }
 
 function currentBoundsHandler(message) {
+    if (!domWalker || !domWalker.currentNode) return;
+
     let bounds = accToRect(
         content.window.pageXOffset,
         content.window.pageYOffset,

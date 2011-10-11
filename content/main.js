@@ -22,18 +22,11 @@ var TalkToMe = {
         window.messageManager.addMessageListener(
             "TalkToMe:Speak", Callback(this.speakHandler,this));
         window.messageManager.addMessageListener(
-            "TalkToMe:ShowBounds", Callback(this.showBoundsHandler,this));
-        window.messageManager.addMessageListener(
             "TalkToMe:Tick", Callback(this.tickHandler,this));
     },
 
     onUIReady : function (aEvent) {
-        let highlighter = this._highlighter = new Highlighter (window);
-        // listen for events that require us to redraw the highlighter.
-        window.messageManager.addMessageListener(
-            "MozScrolledAreaChanged", Callback(this.askForBounds));
-        window.Browser.controlsScrollbox.addEventListener(
-            'scroll', Callback(this.askForBounds));
+        this._highlighter = new Highlighter (window);
     },
 
     tickHandler: function (aMessage) {
@@ -44,15 +37,6 @@ var TalkToMe = {
     speakHandler: function (aMessage) {
         window.tts.speakContent(aMessage.json.phrase);
     },
-
-    showBoundsHandler: function (aMessage) {
-        this._highlighter.highlight(aMessage.json.bounds);
-    },
-
-    askForBounds: function () {
-        let mm = window.Browser.selectedTab.browser.messageManager;
-        mm.sendAsyncMessage("TalkToMe:CurrentBounds");
-    }
 }
 
 // Setup the main event listeners

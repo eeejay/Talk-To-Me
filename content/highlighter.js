@@ -1,4 +1,5 @@
 Components.utils.import("resource://talktome/content/console.js");
+Components.utils.import("resource://talktome/content/closure_utils.js");
 
 EXPORTED_SYMBOLS = ["Highlighter"];
 
@@ -47,6 +48,36 @@ function Highlighter(window) {
         inset.style.boxShadow = "inset 1px 1px 1px #444";
         this._highlightRect.appendChild(inset);
     }
+
+    let contentShowingObserver = document.createElement("observes");
+    contentShowingObserver.setAttribute("element", "bcast_contentShowing");
+    contentShowingObserver.setAttribute("attribute", "disabled");
+    contentShowingObserver.addEventListener(
+        "broadcast",
+        Callback(function (e) {
+            console.log(highlightLayer.getAttribute("disabled") == "true");
+            if (highlightLayer.getAttribute("disabled") == "true")
+                this.hide ();
+            else
+                this.askForBounds();
+        }, this));
+    highlightLayer.appendChild(contentShowingObserver)
+
+    // Hook in to relevant events
+    window.messageManager.addMessageListener(
+        "MozScrolledAreaChanged", Callback(this.askForBounds, this));
+    window.Browser.controlsScrollbox.addEventListener(
+        'scroll', Callback(this.askForBounds, this));
+    window.addEventListener('TabSelect', Callback(this.askForBounds, this));
+    window.addEventListener('TabOpen', Callback(this.hide, this));
+    window.addEventListener('NavigationPanelShown', Callback(this.hide, this));
+    window.addEventListener('NavigationPanelHidden', Callback(this.show, this));
+
+    // Hook to bounds drawing events
+    window.messageManager.addMessageListener(
+        "TalkToMe:ShowBounds", Callback(this.showBoundsHandler,this));
+
+
 }
 
 Highlighter.prototype.highlight = function (bounds) {
@@ -70,7 +101,6 @@ Highlighter.prototype.highlight = function (bounds) {
                                           bounds.right + this.padding);
     }
 
-    this.clear();
     this._highlight(rect);
 };
 
@@ -97,6 +127,14 @@ Highlighter.prototype._transformContentRect = function (top, left, bottom, right
              right: t2.x };
 };
 
+Highlighter.prototype.hide = function (rect) {
+    this._highlightRect.style.display = "none";
+};
+
+Highlighter.prototype.show = function (rect) {
+    this._highlightRect.style.display = "block";
+};
+
 Highlighter.prototype._highlight = function (rect){    
     this._highlightRect.style.display = "none";
     this._highlightRect.style.top = (rect.top - this.borderWidth/2) + "px";
@@ -108,6 +146,11 @@ Highlighter.prototype._highlight = function (rect){
     this._highlightRect.style.display = "block";
 };
 
-Highlighter.prototype.clear = function () {
-    let border = 2;
+Highlighter.prototype.askForBounds = function () {
+    let mm = this.window.Browser.selectedTab.browser.messageManager;
+    mm.sendAsyncMessage("TalkToMe:CurrentBounds");
+};
+
+Highlighter.prototype.showBoundsHandler = function (aMessage) {
+    this.highlight(aMessage.json.bounds);
 }
