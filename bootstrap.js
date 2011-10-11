@@ -36,9 +36,8 @@ function loadIntoWindow (aWindow) {
 
 function initialize_tts (newInstall, installPath) {
     console.log("initialize_tts");
-    Cu.import("resource://talktome/content/platform_utils.js");
+
     Cu.import("resource://talktome/content/speech.js");
-    Cu.import("resource://talktome/content/closure_utils.js");
 
     let mediaPath = installPath.clone();
     mediaPath.append('media');
@@ -76,8 +75,13 @@ function startup (data, reason) {
     let alias = Services.io.newFileURI(data.installPath);
     resource.setSubstitution(data.id.substring(0, data.id.indexOf('@')), alias);
 
-    Cu.import("resource://talktome/content/console.js");
-    
+    try {
+        Cu.import("resource://talktome/content/utils.js");
+    } catch (e) {
+        dump ("BOOTSTRAP ERROR: " + e + "\n");
+        throw e;
+    }
+
     try {
         initialize_tts ((reason == ADDON_INSTALL ||
                          reason == ADDON_UPGRADE ||

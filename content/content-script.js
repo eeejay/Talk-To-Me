@@ -1,9 +1,7 @@
-Components.utils.import("resource://talktome/content/console.js");
+Components.utils.import("resource://talktome/content/utils.js");
 
 try {
     Components.utils.import("resource://talktome/content/dom_walker.js");
-    Components.utils.import("resource://talktome/content/accessible_utils.js");
-    Components.utils.import("resource://talktome/content/closure_utils.js");
 } catch (e) {
     console.printException(e);
 }
@@ -27,8 +25,8 @@ function contentLoadedHandler (e) {
         if (reason == "atpoint")
             sendAsyncMessage("TalkToMe:Tick");
         sendAsyncMessage("TalkToMe:Speak",
-                         { phrase: accToPhrase(currentNode) });
-        let bounds = accToRect(
+                         { phrase: DOMWalker.accToPhrase(currentNode) });
+        let bounds = DOMWalker.accToRect(
             content.window.pageXOffset,
             content.window.pageYOffset,
             currentNode,
@@ -61,7 +59,7 @@ function activateHandler(message) {
 function currentBoundsHandler(message) {
     if (!domWalker || !domWalker.currentNode) return;
 
-    let bounds = accToRect(
+    let bounds = DOMWalker.accToRect(
         content.window.pageXOffset,
         content.window.pageYOffset,
         domWalker.currentNode,

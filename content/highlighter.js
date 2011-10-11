@@ -1,5 +1,4 @@
-Components.utils.import("resource://talktome/content/console.js");
-Components.utils.import("resource://talktome/content/closure_utils.js");
+Components.utils.import("resource://talktome/content/utils.js");
 
 EXPORTED_SYMBOLS = ["Highlighter"];
 

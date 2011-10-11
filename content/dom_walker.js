@@ -1,10 +1,12 @@
 var EXPORTED_SYMBOLS = ["DOMWalker"];
 
-Components.utils.import("resource://talktome/content/accessible_utils.js");
-Components.utils.import("resource://talktome/content/closure_utils.js");
-Components.utils.import("resource://talktome/content/console.js");
+Components.utils.import("resource://talktome/content/utils.js");
 
+var Cc = Components.classes;
 var Ci = Components.interfaces;
+
+var gAccRetrieval = Cc["@mozilla.org/accessibleRetrieval;1"]
+    .getService(Ci.nsIAccessibleRetrieval);
 
 const STATE_BUSY = Ci.nsIAccessibleStates.STATE_BUSY;
 
@@ -19,7 +21,7 @@ function DOMWalker(content, newNodeFunc) {
 DOMWalker.prototype.getDocRoot = function(onLoadFunc) {
     onLoadFunc = onLoadFunc || this.newNodeFunc;
     function getDocRootInner() {
-        let docRoot = getAccessible(this.content.document);
+        let docRoot = DOMWalker.getAccessible(this.content.document);
         
         let state = {};
         docRoot.getState(state, {});
@@ -30,7 +32,7 @@ DOMWalker.prototype.getDocRoot = function(onLoadFunc) {
         this.currentNode = this._searchSubtreeDepth(
             this.docRoot, this._isItemOfInterest);
         
-        // printTree (this.docRoot);
+        // DOMWalker.printTree (this.docRoot);
         
         if (onLoadFunc)
             onLoadFunc(this.currentNode, "onload");
@@ -94,12 +96,12 @@ DOMWalker.prototype._nextNode = function (node, sibling) {
 
 DOMWalker.prototype.prev = function () {
     this._doWalk("previousSibling");
-    console.log("prev: "+ accToString(this.currentNode));
+    console.log("prev: "+ DOMWalker.accToString(this.currentNode));
 }
 
 DOMWalker.prototype.next = function () {
     this._doWalk("nextSibling");
-    console.log("next: "+ accToString(this.currentNode));
+    console.log("next: "+ DOMWalker.accToString(this.currentNode));
 }
 
 DOMWalker.prototype._doWalk = function (sibling) {
@@ -184,5 +186,91 @@ DOMWalker.prototype.navigateToPoint = function (x, y) {
             break;
 
         child = _child;
+    }
+};
+
+// Static utility methods
+
+DOMWalker.accToRect = function accToRect (offsetx, offsety, acc, islocal) {
+    if (!acc) // Bady bad
+        return {x: 0, y: 0, w: 0, h: 0};
+
+    if (islocal) {
+        acc.QueryInterface(Ci.nsIAccessNode);
+        let node = acc.DOMNode;
+
+        if (!node.getBoundingClientRect)
+            node = node.parentNode;
+
+        let rv = node.getBoundingClientRect();
+        
+        return {top: rv.top,
+                left: rv.left,
+                bottom: rv.bottom,
+                right: rv.right};
+    }
+
+    let x = {}, y = {}, w = {}, h = {};
+    acc.getBounds(x, y, w, h);
+    return {left: x.value + offsetx,
+            top: y.value + offsety,
+            right: x.value + w.value + offsetx,
+            bottom: y.value + h.value + offsety};
+};
+
+DOMWalker.accToPhrase = function accToPhrase (acc) {
+    if (!acc) // Grave error
+        return "";
+
+    let phrase = [];
+
+    if (acc.name)
+        phrase.push(acc.name);
+
+    if (acc.role != Ci.nsIAccessibleRole.ROLE_TEXT_LEAF)
+        phrase.push(gAccRetrieval.getStringRole(acc.role));
+
+    return phrase.join(" ");
+};
+
+DOMWalker.accToString = function accToString (acc) {
+    if (!acc)
+        return "[ null ]";
+
+    var text;
+    try {
+        var textIface = acc.QueryInterface(Ci.nsIAccessibleText);
+        text = "(" + textIface.getText(0, -1) + ")";
+    } catch (e) {
+        text = "";
+    }
+    return "[ " + acc.name + " | " + gAccRetrieval.getStringRole(acc.role) + " ]" +
+        text;
+};
+
+DOMWalker.getAccessible = function getAccessible (node) {
+    return gAccRetrieval.getAccessibleFor(node).QueryInterface(Ci.nsIAccessible);
+};
+
+
+DOMWalker.printTree = function printTree (acc, indent) {
+    if (!indent)
+        indent = 0;
+
+    var padding = "";   
+    for (var i=0;i<indent;i++) {
+        padding += ".";
+    }
+
+    console.log(padding + accToString(acc));
+
+    var child = acc.firstChild;
+    while (child) {
+        DOMWalker.printTree(child, indent + 1)
+        try {
+            child = child.nextSibling;
+        } catch (e) {
+            break;
+        }
     }
 };

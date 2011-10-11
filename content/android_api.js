@@ -1,5 +1,4 @@
 Components.utils.import("resource://gre/modules/ctypes.jsm")
-Components.utils.import("resource://talktome/content/console.js");
 
 var EXPORTED_SYMBOLS = ["JavaEnvironment", "JavaObject"];
 

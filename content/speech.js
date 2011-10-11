@@ -4,7 +4,7 @@ const Ci = Components.interfaces;
 const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/ctypes.jsm")
-Cu.import("resource://talktome/content/console.js");
+Cu.import("resource://talktome/content/utils.js");
 
 function TextToSpeech(mediaPath, usingAndroid) {
     this.mediaPath = mediaPath;

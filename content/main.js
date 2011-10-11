@@ -1,9 +1,8 @@
 try {
-    Components.utils.import("resource://talktome/content/console.js");
+    Components.utils.import("resource://talktome/content/utils.js");
     Components.utils.import("resource://talktome/content/gesture_mangler.js");
     Components.utils.import("resource://talktome/content/highlighter.js");
     Components.utils.import("resource://talktome/content/input_manager.js");
-    Components.utils.import("resource://talktome/content/closure_utils.js");
 } catch (e) {
     console.printException(e);
 }
