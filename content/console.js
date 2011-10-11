@@ -78,6 +78,10 @@ Console.prototype.dumpObj = function (obj, dump_const, ommit_empty) {
     }
 }
 
+Console.prototype.dumpArgs = function (args) {
+    this.dumpObj(Array.prototype.slice.call(args));
+}
+
 Console.prototype.printException = function (exc) {
     if (exc.message)
         this.log ("Error: " + exc.message);
