@@ -154,7 +154,8 @@ DOMWalker.prototype.activate = function (node) {
             actionName == "click" ||
             actionName == "activate" ||
             actionName == "check" ||
-            actionName == "uncheck") {
+            actionName == "uncheck" ||
+            actionName == "select") {
             node.doAction (i);
             return true;
         }
