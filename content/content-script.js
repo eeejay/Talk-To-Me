@@ -46,6 +46,7 @@ function navigateHandler(message) {
         else if (direction == "prev")
             domWalker.prev();
     } else if (message.json.x != undefined && message.json.y != undefined) {
+        console.log("navigateToPoint");
         domWalker.navigateToPoint(message.json.x, message.json.y);
     } else {
         throw new Error("bad nav command");

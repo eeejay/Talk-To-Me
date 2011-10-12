@@ -3,33 +3,9 @@ Components.utils.import("resource://talktome/content/gesture_mangler.js");
 
 EXPORTED_SYMBOLS=["InputManager"];
 
-function _SidebarToggler (window) {
-    let document = window.document;
+function InputManager (window, navigator) {
     this.window = window;
-
-    this._elements = [document.getElementById('controls-sidebar'),
-                      document.getElementById('page-stack'),
-                      document.getElementById('tabs-sidebar')];
-    this._current = 1;
-}
-
-_SidebarToggler.prototype = {
-    left: function left () {
-        this._current = Math.max(0, --this._current);
-        this.window.Browser.controlsScrollboxScroller
-            .ensureElementIsVisible(this._elements[this._current]);
-    },
-    right: function right () {
-        this._current = Math.min(this._elements.length - 1, ++this._current);
-        this.window.Browser.controlsScrollboxScroller
-            .ensureElementIsVisible(this._elements[this._current]);
-    }
-}
-
-function InputManager (window, presenter) {
-    this.window = window;
-    this.presenter = presenter;
-    this._sidebarToggler = new _SidebarToggler(window);
+    this.navigator = navigator;
     this.gestureMangler = new GestureMangler(window);
 }
 
@@ -60,16 +36,15 @@ InputManager.prototype.stop = function stop () {
 
 InputManager.prototype.dwellHandler = function (e) {
     // navigate to item under finger
-    let browser = this.window.Browser.selectedTab.browser;
     let d = e.detail[e.detail.length-1];
-    browser.messageManager.sendAsyncMessage(
-        "TalkToMe:Navigate", browser.transformClientToBrowser (d.x, d.y));
+    let {x: x, y: y} = this.window.Browser.selectedTab.browser.
+        transformClientToBrowser (d.x, d.y);
+    this.navigator.toPoint(x, y);
 };
 
 InputManager.prototype.tapHandler = function (e) {
     if (e.detail.length != 2) return // not a double tap.
-    let mm = this.window.Browser.selectedTab.browser.messageManager;
-    mm.sendAsyncMessage("TalkToMe:Activate");
+    this.navigator.activate();
 }
 
 InputManager.prototype.swipeHandler = function (e) {
@@ -79,14 +54,10 @@ InputManager.prototype.swipeHandler = function (e) {
 
         switch (detail.direction) {
         case "right":
-            console.log ("next");
-            this.presenter.tick();
-            mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "next" });
+            this.navigator.next();
             break;
         case "left":
-            console.log ("prev");
-            this.presenter.tick();
-            mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "prev" });
+            this.navigator.prev();
             break;
         default:
             break;
@@ -94,10 +65,10 @@ InputManager.prototype.swipeHandler = function (e) {
     } else if (detail.fingers == 3) {
         switch (detail.direction) {
         case "right":
-            this._sidebarToggler.right();
+            this.navigator.chromeRight();
             break;
         case "left":
-            this._sidebarToggler.left();
+            this.navigator.chromeLeft();
             break;
         default:
             break;
@@ -111,24 +82,19 @@ InputManager.prototype.keypressHandler = function (e) {
         let mm = this.window.Browser.selectedTab.browser.messageManager;
         switch (e.keyCode) {
         case e.DOM_VK_DOWN:
-            this.presenter.tick();
-            mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "next" });
-            console.log ("next");
+            this.navigator.next();
             break;
         case e.DOM_VK_UP:
-            this.presenter.tick();
-            mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "prev" });
-            console.log ("prev");
+            this.navigator.prev();
             break;
         case e.DOM_VK_LEFT:
-            this._sidebarToggler.left();
+            this.navigator.chromeLeft()
             break;
         case e.DOM_VK_RIGHT:
-            this._sidebarToggler.right();
+            this.navigator.chromeRight()
             break;
         case 13: // For some reason DOM_VK_ENTER maps to 14 ??
-            mm.sendAsyncMessage("TalkToMe:Activate");
-            console.log ("activate");
+            this.navigator.activate();
             break;
         default:
             break;
