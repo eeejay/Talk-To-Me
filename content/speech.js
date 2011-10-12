@@ -18,7 +18,8 @@ function TextToSpeech(mediaPath, usingAndroid) {
 
 TextToSpeech.prototype._register_earcons = function () {
     let earcons = {"tick.wav": "[tick]",
-                   "activate.wav": "[activate]"};
+                   "activate.wav": "[activate]",
+                   "thud.wav": "[thud]"};
     for (let fname in earcons) {
         let _path = this.mediaPath.clone();
         _path.append(fname);
