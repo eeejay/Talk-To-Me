@@ -143,7 +143,7 @@ DOMWalker.prototype.activate = function (node) {
     // iterate through the options.
     if (node.role == Ci.nsIAccessibleRole.ROLE_COMBOBOX_OPTION) {
         node.takeSelection();
-        return;
+        return true;
     }
 
     for (let i=0;i<node.numActions;i++) {
@@ -156,12 +156,14 @@ DOMWalker.prototype.activate = function (node) {
             actionName == "check" ||
             actionName == "uncheck") {
             node.doAction (i);
-            return;
+            return true;
         }
     }
 
     if (node.parent)
-        this.activate(node.parent);
+        return this.activate(node.parent);
+    else
+        return false;
 }
 
 DOMWalker.prototype.navigateToPoint = function (x, y) {

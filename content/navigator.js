@@ -12,12 +12,12 @@ function Navigator(window, presenter) {
 Navigator.prototype = {
     next: function next () {
         console.log("Navigator.next");
-        this.presenter.tick();
+        this.presenter.playTick();
         this._message("Navigate", { direction : "next" });
     },
     prev: function prev () {
         console.log("Navigator.prev");
-        this.presenter.tick();
+        this.presenter.playTick();
         this._message("Navigate", { direction : "prev" });
     },
     activate: function activate () {

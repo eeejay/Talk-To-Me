@@ -23,6 +23,10 @@ function Presenter(window, tts) {
         "TalkToMe:SpeakAppState",  Callback(function(aMessage) {
             this.speakAppState(aMessage.json.phrase);
         } ,this));
+    window.messageManager.addMessageListener(
+        "TalkToMe:Activated",  Callback(function(aMessage) {
+            this.playActivate();
+        } ,this));
 
     this._highlighter = new _Highlighter(window);
 }
@@ -32,7 +36,7 @@ Presenter.prototype = {
         this.tts.speakContent(phrase);
     },
     speakPoint: function speakPoint (phrase) {
-        this.tts.playTick();
+        this.tts.playEarcon("[tick]");
         this.tts.speakContent(phrase);
     },
     showBounds: function showBounds (bounds) {
@@ -41,8 +45,11 @@ Presenter.prototype = {
     speakAppState: function speakAppState (phrase) {
         this.tts.speakAppState (phrase);
     },
-    tick: function tick (phrase) {
-        this.tts.playTick();
+    playTick: function playTick (phrase) {
+        this.tts.playEarcon("[tick]");
+    },
+    playActivate: function playTick (phrase) {
+        this.tts.playEarcon("[activate]");
     }
 };
 

@@ -133,7 +133,8 @@ function navigateHandler(message) {
 }
 
 function activateHandler(message) {
-    domWalker.activate();
+    if (domWalker.activate())
+        sendAsyncMessage("TalkToMe:Activated");
 }
 
 function currentBoundsHandler(message) {
