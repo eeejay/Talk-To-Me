@@ -148,7 +148,7 @@ DOMWalker.prototype.activate = function (node) {
 
     for (let i=0;i<node.numActions;i++) {
         let actionName = node.getActionName(i);
-        console.log(accToString(node) + " " + actionName);
+        console.log(DOMWalker.accToString(node) + " " + actionName);
         if (actionName == "jump" ||
             actionName == "press" ||
             actionName == "click" ||
@@ -193,7 +193,7 @@ DOMWalker.prototype.navigateToPoint = function (x, y) {
 
 DOMWalker.accToRect = function accToRect (offsetx, offsety, acc, islocal) {
     if (!acc) // Bady bad
-        return {x: 0, y: 0, w: 0, h: 0};
+        return {top: 0, bottom: 0, left: 0, right: 0};
 
     if (islocal) {
         acc.QueryInterface(Ci.nsIAccessNode);
@@ -211,7 +211,11 @@ DOMWalker.accToRect = function accToRect (offsetx, offsety, acc, islocal) {
     }
 
     let x = {}, y = {}, w = {}, h = {};
-    acc.getBounds(x, y, w, h);
+    try {
+        acc.getBounds(x, y, w, h);
+    } catch (e) {
+        x.value = y.value = w.value = h.value = 0;
+    }
     return {left: x.value + offsetx,
             top: y.value + offsety,
             right: x.value + w.value + offsetx,
