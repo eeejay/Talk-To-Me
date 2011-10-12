@@ -56,12 +56,14 @@ TextToSpeech.prototype._get_android_tts = function () {
     return android_tts;
 }
 
-TextToSpeech.prototype.playEarcon = function (earcon) {
+TextToSpeech.prototype.playEarcon = function (earcon, queue) {
     console.log("TextToSpeech.playEarcon");
+    queue = (queue == undefined) ?
+        TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD;
     if (this.android_tts) {
         if (!this._registered_earcons)
             this._register_earcons();
-        this.android_tts.playEarcon(earcon, TextToSpeech.QUEUE_FLUSH, 0);
+        this.android_tts.playEarcon(earcon, queue, 0);
     }
     this._playing_earcon = true;
 }
