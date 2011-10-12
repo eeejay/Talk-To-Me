@@ -1,8 +1,49 @@
 Components.utils.import("resource://talktome/content/utils.js");
 
-EXPORTED_SYMBOLS = ["Highlighter"];
+EXPORTED_SYMBOLS = ["Presenter"];
 
-function Highlighter(window) {
+function Presenter(window, tts) {
+    this.window = window;
+    this.tts = tts;
+
+    window.messageManager.addMessageListener(
+        "TalkToMe:SpeakNav",
+        Callback(function(aMessage) {
+            this.speakNav(aMessage.json.phrase);
+        } ,this));
+    window.messageManager.addMessageListener(
+        "TalkToMe:SpeakPoint", Callback(function(aMessage) {
+            this.speakPoint(aMessage.json.phrase);
+        } ,this));
+    window.messageManager.addMessageListener(
+        "TalkToMe:ShowBounds", Callback(function(aMessage) {
+            this.showBounds(aMessage.json.bounds);
+        } ,this));
+    window.messageManager.addMessageListener(
+        "TalkToMe:SpeakAppState",  Callback(function(aMessage) {
+            this.speakAppState(aMessage.json.phrase);
+        } ,this));
+
+    this._highlighter = new _Highlighter(window);
+}
+
+Presenter.prototype = {
+    speakNav: function speakNav (phrase) {
+        this.tts.speakContent(phrase);
+    },
+    speakPoint: function speakPoint (phrase) {
+        this.tts.playTick();
+        this.tts.speakContent(phrase);
+    },
+    showBounds: function showBounds (bounds) {
+        this._highlighter.highlight(bounds);
+    },
+    speakAppState: function speakAppState (phrase) {
+        this.tts.speakAppState (phrase);
+    }
+};
+
+function _Highlighter(window) {
     this.window = window;
 
     // TODO: Make into prefs
@@ -71,15 +112,9 @@ function Highlighter(window) {
     window.addEventListener('TabOpen', Callback(this.hide, this));
     window.addEventListener('NavigationPanelShown', Callback(this.hide, this));
     window.addEventListener('NavigationPanelHidden', Callback(this.show, this));
-
-    // Hook to bounds drawing events
-    window.messageManager.addMessageListener(
-        "TalkToMe:ShowBounds", Callback(this.showBoundsHandler,this));
-
-
 }
 
-Highlighter.prototype.highlight = function (bounds) {
+_Highlighter.prototype.highlight = function (bounds) {
     let rect = this._transformContentRect(bounds.top - this.padding,
                                           bounds.left - this.padding,
                                           bounds.bottom + this.padding,
@@ -103,7 +138,7 @@ Highlighter.prototype.highlight = function (bounds) {
     this._highlight(rect);
 };
 
-Highlighter.prototype._clip = function (rect) {
+_Highlighter.prototype._clip = function (rect) {
     let bcr = this.window.Browser.selectedTab.browser.getBoundingClientRect();
 
     return {
@@ -114,7 +149,7 @@ Highlighter.prototype._clip = function (rect) {
     };
 };
 
-Highlighter.prototype._transformContentRect = function (top, left, bottom, right) {
+_Highlighter.prototype._transformContentRect = function (top, left, bottom, right) {
     let t1 = this.window.Browser.selectedTab.browser.transformBrowserToClient(
         left, top);
     let t2 = this.window.Browser.selectedTab.browser.transformBrowserToClient(
@@ -126,15 +161,15 @@ Highlighter.prototype._transformContentRect = function (top, left, bottom, right
              right: t2.x };
 };
 
-Highlighter.prototype.hide = function (rect) {
+_Highlighter.prototype.hide = function (rect) {
     this._highlightRect.style.display = "none";
 };
 
-Highlighter.prototype.show = function (rect) {
+_Highlighter.prototype.show = function (rect) {
     this._highlightRect.style.display = "block";
 };
 
-Highlighter.prototype._highlight = function (rect){    
+_Highlighter.prototype._highlight = function (rect){    
     this._highlightRect.style.display = "none";
     this._highlightRect.style.top = (rect.top - this.borderWidth/2) + "px";
     this._highlightRect.style.left = (rect.left - this.borderWidth/2) + "px";
@@ -145,11 +180,11 @@ Highlighter.prototype._highlight = function (rect){
     this._highlightRect.style.display = "block";
 };
 
-Highlighter.prototype.askForBounds = function () {
+_Highlighter.prototype.askForBounds = function () {
     let mm = this.window.Browser.selectedTab.browser.messageManager;
     mm.sendAsyncMessage("TalkToMe:CurrentBounds");
 };
 
-Highlighter.prototype.showBoundsHandler = function (aMessage) {
+_Highlighter.prototype.showBoundsHandler = function (aMessage) {
     this.highlight(aMessage.json.bounds);
 }

@@ -22,9 +22,9 @@ function contentLoadedHandler (e) {
     domWalker = new DOMWalker(content);
     domWalker.newNodeFunc = function (currentNode, reason) {
         console.log(reason);
-        if (reason == "atpoint")
-            sendAsyncMessage("TalkToMe:Tick");
-        sendAsyncMessage("TalkToMe:Speak",
+        let mname = (reason != "atpoint") ? "SpeakNav" : "SpeakPoint";
+
+        sendAsyncMessage("TalkToMe:" + mname,
                          { phrase: DOMWalker.accToPhrase(currentNode) });
         let bounds = DOMWalker.accToRect(
             content.window.pageXOffset,

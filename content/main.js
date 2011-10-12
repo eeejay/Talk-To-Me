@@ -1,14 +1,14 @@
 try {
     Components.utils.import("resource://talktome/content/utils.js");
     Components.utils.import("resource://talktome/content/gesture_mangler.js");
-    Components.utils.import("resource://talktome/content/highlighter.js");
+    Components.utils.import("resource://talktome/content/presenter.js");
     Components.utils.import("resource://talktome/content/input_manager.js");
 } catch (e) {
     console.printException(e);
 }
 
 var TalkToMe = {
-    _highlighter: null,
+    presenter: null,
 
     onLoad : function (aEvent) {
         this.gesture_mangler = new GestureMangler(window);
@@ -18,14 +18,10 @@ var TalkToMe = {
 
         window.messageManager.loadFrameScript(
             "resource://talktome/content/content-script.js", true);
-        window.messageManager.addMessageListener(
-            "TalkToMe:Speak", Callback(this.speakHandler,this));
-        window.messageManager.addMessageListener(
-            "TalkToMe:Tick", Callback(this.tickHandler,this));
     },
 
     onUIReady : function (aEvent) {
-        this._highlighter = new Highlighter (window);
+        this.presenter = new Presenter (window, window.tts);
     },
 
     tickHandler: function (aMessage) {
