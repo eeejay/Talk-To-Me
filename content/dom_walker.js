@@ -125,13 +125,11 @@ DOMWalker.prototype._doWalk = function (sibling) {
         nextNode = this._nextNode(nextNode, sibling);
     }
 
-    if (obj) {
+    if (obj)
         this.currentNode = obj;
-        if (this.newNodeFunc)
-            this.newNodeFunc(this.currentNode, "walked");
-    } else {
-        console.warning("No new node.");
-    }
+
+    if (this.newNodeFunc)
+        this.newNodeFunc(obj, "walked");
 }
 
 DOMWalker.prototype.activate = function (node) {

@@ -1,4 +1,5 @@
 Components.utils.import("resource://talktome/content/utils.js");
+Components.utils.import("resource://talktome/content/speech.js");
 
 EXPORTED_SYMBOLS = ["Presenter"];
 
@@ -27,6 +28,10 @@ function Presenter(window, tts) {
         "TalkToMe:Activated",  Callback(function(aMessage) {
             this.playActivate();
         } ,this));
+    window.messageManager.addMessageListener(
+        "TalkToMe:DeadEnd",  Callback(function(aMessage) {
+            this.playThud();
+        } ,this));
 
     this._highlighter = new _Highlighter(window);
 }
@@ -48,8 +53,11 @@ Presenter.prototype = {
     playTick: function playTick (phrase) {
         this.tts.playEarcon("[tick]");
     },
-    playActivate: function playTick (phrase) {
+    playActivate: function playActivate (phrase) {
         this.tts.playEarcon("[activate]");
+    },
+    playThud: function playThud (phrase) {
+        this.tts.playEarcon("[thud]", TextToSpeech.QUEUE_ADD);
     }
 };
 

@@ -101,6 +101,11 @@ function contentLoadedHandler (e) {
     domWalker = new DOMWalker(content);
     domWalker.newNodeFunc = 
         Callback(function (currentNode, reason) {
+            if (!currentNode) {
+                sendAsyncMessage("TalkToMe:" + "DeadEnd");
+                return;
+            }
+
             let mname = (reason != "atpoint") ? "SpeakNav" : "SpeakPoint";
             
             sendAsyncMessage("TalkToMe:" + mname,
