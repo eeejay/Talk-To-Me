@@ -1,4 +1,5 @@
 Components.utils.import("resource://talktome/content/utils.js");
+Components.utils.import("resource://talktome/content/gesture_mangler.js");
 
 EXPORTED_SYMBOLS=["InputManager"];
 
@@ -25,19 +26,37 @@ _SidebarToggler.prototype = {
     }
 }
 
-function InputManager (window) {
+function InputManager (window, presenter) {
     this.window = window;
+    this.presenter = presenter;
     this._sidebarToggler = new _SidebarToggler(window);
-
-    window.addEventListener('keypress',
-                            Callback(this.keypressHandler, this), false);
-    window.addEventListener('TalkToMe::Swipe',
-                            Callback(this.swipeHandler, this),false);
-    window.addEventListener('TalkToMe::Tap',
-                            Callback(this.tapHandler, this), false);
-    window.addEventListener('TalkToMe::Dwell',
-                            Callback(this.dwellHandler, this), false);
+    this.gestureMangler = new GestureMangler(window);
 }
+
+InputManager.prototype.start = function start () {
+    this.gestureMangler.enable();
+    this.window.addEventListener('keypress',
+                                 Callback(this.keypressHandler, this), false);
+    this.window.addEventListener('TalkToMe::Swipe',
+                                 Callback(this.swipeHandler, this),false);
+    this.window.addEventListener('TalkToMe::Tap',
+                                 Callback(this.tapHandler, this), false);
+    this.window.addEventListener('TalkToMe::Dwell',
+                                 Callback(this.dwellHandler, this), false);
+};
+
+InputManager.prototype.stop = function stop () {
+    this.gestureMangler.disable();
+    this.window.removeEventListener('keypress',
+                                    Callback(this.keypressHandler, this), false);
+    this.window.removeEventListener('TalkToMe::Swipe',
+                                    Callback(this.swipeHandler, this),false);
+    this.window.removeEventListener('TalkToMe::Tap',
+                                    Callback(this.tapHandler, this), false);
+    this.window.removeEventListener('TalkToMe::Dwell',
+                               Callback(this.dwellHandler, this), false);
+};
+
 
 InputManager.prototype.dwellHandler = function (e) {
     // navigate to item under finger
@@ -61,12 +80,12 @@ InputManager.prototype.swipeHandler = function (e) {
         switch (detail.direction) {
         case "right":
             console.log ("next");
-            this.window.tts.playTick();
+            this.presenter.tick();
             mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "next" });
             break;
         case "left":
             console.log ("prev");
-            this.window.tts.playTick();
+            this.presenter.tick();
             mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "prev" });
             break;
         default:
@@ -92,10 +111,12 @@ InputManager.prototype.keypressHandler = function (e) {
         let mm = this.window.Browser.selectedTab.browser.messageManager;
         switch (e.keyCode) {
         case e.DOM_VK_DOWN:
+            this.presenter.tick();
             mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "next" });
             console.log ("next");
             break;
         case e.DOM_VK_UP:
+            this.presenter.tick();
             mm.sendAsyncMessage("TalkToMe:Navigate", { direction : "prev" });
             console.log ("prev");
             break;

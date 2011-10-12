@@ -1,6 +1,5 @@
 try {
     Components.utils.import("resource://talktome/content/utils.js");
-    Components.utils.import("resource://talktome/content/gesture_mangler.js");
     Components.utils.import("resource://talktome/content/presenter.js");
     Components.utils.import("resource://talktome/content/input_manager.js");
 } catch (e) {
@@ -9,19 +8,18 @@ try {
 
 var TalkToMe = {
     presenter: null,
+    inputManager: null,
 
     onLoad : function (aEvent) {
-        this.gesture_mangler = new GestureMangler(window);
-        this.gesture_mangler.enable();
-        
-        this.input_manager = new InputManager(window);
-
         window.messageManager.loadFrameScript(
             "resource://talktome/content/content-script.js", true);
     },
 
     onUIReady : function (aEvent) {
+        console.log("onUIReady");
         this.presenter = new Presenter (window, window.tts);
+        this.inputManager = new InputManager(window, this.presenter);
+        this.inputManager.start();
     },
 
     tickHandler: function (aMessage) {

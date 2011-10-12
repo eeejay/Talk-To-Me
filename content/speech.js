@@ -51,6 +51,7 @@ TextToSpeech.prototype._get_android_tts = function () {
 }
 
 TextToSpeech.prototype.playTick = function () {
+    console.log("TextToSpeech.playTick");
     if (this.android_tts) {
         if (!this._registered_earcons)
             this._register_earcons();
@@ -61,7 +62,7 @@ TextToSpeech.prototype.playTick = function () {
 
 
 TextToSpeech.prototype.speakContent = function (s) {
-    console.log("SPEAK: " + s);
+    console.log("TextToSpeech.speakContent: " + s);
     let queue = (this._dont_interrupt) ?
         TextToSpeech.QUEUE_ADD :
         TextToSpeech.QUEUE_FLUSH;

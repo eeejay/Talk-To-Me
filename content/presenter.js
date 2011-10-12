@@ -40,6 +40,9 @@ Presenter.prototype = {
     },
     speakAppState: function speakAppState (phrase) {
         this.tts.speakAppState (phrase);
+    },
+    tick: function tick (phrase) {
+        this.tts.playTick();
     }
 };
 
