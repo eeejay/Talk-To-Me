@@ -31,6 +31,11 @@ class FennecCLI(mozrunner.CLI):
         self.parser_options.update(mozrunner.CLI.parser_options)
         super(FennecCLI, self).__init__()
     
+    def create_runner(self):
+        runner = super(FennecCLI, self).create_runner()
+        runner.cmdargs.extend(self.options.appArgs)
+        return runner
+
     def get_profile(self, binary=None, profile=None, addons=None,
                     preferences=None):
         if self.options.tabletUI:
