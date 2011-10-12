@@ -73,7 +73,12 @@ Console.prototype.dumpDOM = function (obj, indent) {
 
 Console.prototype.dumpObj = function (obj, dump_const, ommit_empty) {
     this.log(obj);
-    for (var prop in obj) {
+    props = [];
+    for (let prop in obj) {
+        props.push(prop);
+    }
+    for (let i in props.sort()) {
+        let prop = props[i];
         if (prop.toUpperCase() == prop && !dump_const) // Probably a constant
             continue;
         try {
@@ -87,7 +92,9 @@ Console.prototype.dumpObj = function (obj, dump_const, ommit_empty) {
 }
 
 Console.prototype.dumpArgs = function (args) {
-    this.dumpObj(Array.prototype.slice.call(args));
+    console.log(args.callee.name);
+    for (let i = 0; args.length > i; i++)
+        console.log(" " + this._toString(args[i]));
 }
 
 Console.prototype.printException = function (exc) {
@@ -99,6 +106,8 @@ Console.prototype.printException = function (exc) {
     if (exc.fileName) {
         let filename = exc.fileName.split(' -> ');
         this.log (" " + filename[filename.length - 1] + ":" + exc.lineNumber);
+    } else if (exc.filename) {
+        this.log (" " + exc.filename + ":" + exc.lineNumber);
     }
 }
 
