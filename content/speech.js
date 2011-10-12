@@ -57,18 +57,25 @@ TextToSpeech.prototype.playTick = function () {
             this._register_earcons();
         this.android_tts.playEarcon("[tick]", TextToSpeech.QUEUE_FLUSH, 0);
     }
-    this._dont_interrupt = true;
 }
 
-
 TextToSpeech.prototype.speakContent = function (s) {
+    this.setPitch(1.0);
     console.log("TextToSpeech.speakContent: " + s);
-    let queue = (this._dont_interrupt) ?
-        TextToSpeech.QUEUE_ADD :
-        TextToSpeech.QUEUE_FLUSH;
-    this._dont_interrupt = false;
     if (this.android_tts) {
-        let ret = this.android_tts.speak(s || "", queue, 0);
+        let ret = this.android_tts.speak(s || "", TextToSpeech.QUEUE_ADD, 0);
+        console.log(ret);
+        return (ret == 0);
+    }
+
+    return true;
+}
+
+TextToSpeech.prototype.speakAppState = function (s) {
+    this.setPitch(0.7);
+    console.log("TextToSpeech.speakAppState: " + s);
+    if (this.android_tts) {
+        let ret = this.android_tts.speak(s || "", TextToSpeech.QUEUE_FLUSH, 0);
         console.log(ret);
         return (ret == 0);
     }
@@ -77,7 +84,7 @@ TextToSpeech.prototype.speakContent = function (s) {
 }
 
 TextToSpeech.prototype.setPitch = function (f) {
-    console.log("setPitch: " + f);
+    console.log("TextToSpeech.setPitch: " + f);
     if (this.android_tts) {
         let ret = this.android_tts.setPitch(f);
         return (ret == 0);
@@ -87,7 +94,7 @@ TextToSpeech.prototype.setPitch = function (f) {
 }
 
 TextToSpeech.prototype.shutdown = function () {
-    console.log("shutdown");
+    console.log("TextToSpeech.shutdown");
 
     if (this.android_tts)
         this.android_tts.shutdown();
