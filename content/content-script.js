@@ -17,6 +17,7 @@ addEventListener('DOMContentLoaded', Callback(contentLoadedHandler));
 addMessageListener("TalkToMe:Navigate", Callback(navigateHandler));
 addMessageListener("TalkToMe:Activate", Callback(activateHandler));
 addMessageListener("TalkToMe:CurrentBounds", Callback(currentBoundsHandler));
+addEventListener("MozScrolledAreaChanged", Callback(currentBoundsHandler));
 
 function WebProgressListener() {
     let flags = Ci.nsIWebProgress.NOTIFY_ALL;
@@ -142,7 +143,7 @@ function activateHandler(message) {
         sendAsyncMessage("TalkToMe:Activated");
 }
 
-function currentBoundsHandler(message) {
+function currentBoundsHandler() {
     if (!domWalker || !domWalker.currentNode) return;
 
     let bounds = DOMWalker.accToRect(

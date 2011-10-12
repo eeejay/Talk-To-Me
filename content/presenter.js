@@ -117,13 +117,11 @@ function _Highlighter(window) {
             if (highlightLayer.getAttribute("disabled") == "true")
                 this.hide ();
             else
-                this.askForBounds();
+                this.show ();
         }, this));
     highlightLayer.appendChild(contentShowingObserver)
 
     // Hook in to relevant events
-    window.messageManager.addMessageListener(
-        "MozScrolledAreaChanged", Callback(this.askForBounds, this));
     window.Browser.controlsScrollbox.addEventListener(
         'scroll', Callback(this.askForBounds, this));
     window.addEventListener('TabSelect', Callback(this.askForBounds, this));
