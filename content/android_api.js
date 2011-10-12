@@ -495,7 +495,7 @@ JavaObject.prototype._createMethods = function () {
                 else if (_arg[0] == "J")
                     _args.push(ctypes.int64_t(arguments[i]));
                 else if (_arg[0] == "F")
-                    _args.push(ctypes.float32_t(arguments[i]));
+                    _args.push(ctypes.float64_t(arguments[i]));
                 else if (_arg[0] == "D")
                     _args.push(ctypes.float64_t(arguments[i]));
                 else if (_arg[0] == "Ljava/lang/String;")
