@@ -9,6 +9,7 @@ var gAccRetrieval = Cc["@mozilla.org/accessibleRetrieval;1"]
     .getService(Ci.nsIAccessibleRetrieval);
 
 const STATE_BUSY = Ci.nsIAccessibleStates.STATE_BUSY;
+const STATE_CHECKED = Ci.nsIAccessibleStates.STATE_CHECKED;
 
 function DOMWalker(content, newNodeFunc) {
     this.newNodeFunc = newNodeFunc;
@@ -235,6 +236,12 @@ DOMWalker.accToPhrase = function accToPhrase (acc) {
     if (acc.role != Ci.nsIAccessibleRole.ROLE_TEXT_LEAF)
         phrase.push(gAccRetrieval.getStringRole(acc.role));
 
+    let state = {};
+    acc.getState(state, {});
+
+    if (state.value & STATE_CHECKED)
+        phrase.push("checked");
+
     return phrase.join(" ");
 };
 
@@ -245,12 +252,23 @@ DOMWalker.accToString = function accToString (acc) {
     var text;
     try {
         var textIface = acc.QueryInterface(Ci.nsIAccessibleText);
-        text = "(" + textIface.getText(0, -1) + ")";
+        text = " (" + textIface.getText(0, -1) + ")";
     } catch (e) {
         text = "";
     }
-    return "[ " + acc.name + " | " + gAccRetrieval.getStringRole(acc.role) + " ]" +
-        text;
+
+    let state = {};
+    let ext_state = {};
+    acc.getState(state, ext_state);
+
+    let _states = gAccRetrieval.getStringStates(state.value, ext_state.value);
+    let states = [];
+    
+    for (let i=0;i<_states.length;i++)
+        states.push(_states.item(i));
+
+    return "[ " + acc.name + " | " + gAccRetrieval.getStringRole(acc.role) +
+        " ] " + states + text;
 };
 
 DOMWalker.getAccessible = function getAccessible (node) {
