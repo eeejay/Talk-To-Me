@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import mozrunner
+import shlex
 
 class FennecProfile(mozrunner.FirefoxProfile):
     def __init__(self, binary=None, profile=None, addons=None, preferences=None):
@@ -23,17 +24,18 @@ class FennecCLI(mozrunner.CLI):
 
     def __init__(self):
         self.parser_options = {
-            ("--app-arg",): dict(
-                dest='appArgs', action='append', default=[],
+            ("--app-args",): dict(
+                dest='appArgs', action='store', default=None,
                 help='provides an argument to the test application'),
             ("--tablet", ): dict(dest="tabletUI", action="store_true",
                                  default=False, help="Use tablet UI")}
         self.parser_options.update(mozrunner.CLI.parser_options)
         super(FennecCLI, self).__init__()
-    
+
     def create_runner(self):
         runner = super(FennecCLI, self).create_runner()
-        runner.cmdargs.extend(self.options.appArgs)
+        if self.options.appArgs:
+            runner.cmdargs.extend(shlex.split(self.options.appArgs))
         return runner
 
     def get_profile(self, binary=None, profile=None, addons=None,
