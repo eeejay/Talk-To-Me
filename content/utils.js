@@ -120,6 +120,12 @@ var console = new Console();
 // Platform utils
 
 var PlatformUtils = {
+    resolveResourceURI: function (aResourceURI) {
+        let resource = Services.io.getProtocolHandler("resource").
+            QueryInterface(Ci.nsIResProtocolHandler);
+        let uri = Services.io.newURI(aResourceURI, null, null);
+        return resource.resolveURI(uri);
+    },
     getAppDir: function (name) {
         Cu.import("resource://talktome/content/android_api.js");
         let _jfile = JavaEnvironment.getAppContext().getDir(name, 1);

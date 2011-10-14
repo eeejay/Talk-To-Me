@@ -15,24 +15,47 @@ var externalMediaPath = null;
 /* From http://starkravingfinkle.org/blog/2011/01/bootstrap-jones-adventures-in-restartless-add-ons/ */
 
 var windowListener = {
+  data: null,
   onOpenWindow: function(aWindow) {
       let domWindow = aWindow.QueryInterface(Ci.nsIInterfaceRequestor)
           .getInterface(Ci.nsIDOMWindowInternal || Ci.nsIDOMWindow);
-      loadIntoWindow(domWindow);
+      loadIntoWindow(domWindow, this.data);
   },
   onCloseWindow: function(aWindow) { },
   onWindowTitleChange: function(aWindow, aTitle) { }
 };
 
-function loadIntoWindow (aWindow) {
-    aWindow.tts = tts;
-    let _globals = {window: aWindow};
+function loadIntoContent (aWindow, data) {
+    let contentScript = data.installPath.clone();
+    contentScript.append('content');
+    contentScript.append('content-script.js');
+    let contentURI = Services.io.newFileURI(contentScript);
     try {
-        loader.loadSubScript("resource://talktome/content/main.js", _globals);
+        aWindow.messageManager.addMessageListener(
+            "TalkToMe:BootstrapMe",
+            function (message) {
+                let extName = data.id.substring(0, data.id.indexOf('@'));
+                let installPathURI = Services.io.newFileURI(data.installPath);
+                aWindow.messageManager.sendAsyncMessage(
+                    "TalkToMe:Bootstrap",
+                    {extName: extName, installPathString: installPathURI.spec});
+            });
+        aWindow.messageManager.loadFrameScript(contentURI.spec, true);
     } catch (e) {
         console.printException(e);
     }
 }
+
+function loadIntoWindow (aWindow, data) {
+    aWindow.tts = tts;
+    let _globals = {window: aWindow};
+    loader.loadSubScript("resource://talktome/content/main.js", _globals);
+    try {
+        loadIntoContent (aWindow, data);
+    } catch (e) {
+        console.printException(e);
+    }
+ }
 
 function initialize_tts (newInstall, installPath) {
     console.log("initialize_tts");
@@ -94,10 +117,11 @@ function startup (data, reason) {
     let enumerator = Services.wm.getEnumerator("navigator:browser");
     while (enumerator.hasMoreElements()) {
         let win = enumerator.getNext();
-        loadIntoWindow(win);
+        loadIntoWindow(win, data);
     }
 
     // Load into any new windows
+    windowListener.data = data;
     Services.wm.addListener(windowListener);
 }
 

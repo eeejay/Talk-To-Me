@@ -11,11 +11,6 @@ var TalkToMe = {
     presenter: null,
     inputManager: null,
 
-    onLoad : function (aEvent) {
-        window.messageManager.loadFrameScript(
-            "resource://talktome/content/content-script.js", true);
-    },
-
     onUIReady : function (aEvent) {
         console.log("onUIReady");
         this.presenter = new Presenter (window, window.tts);
@@ -25,6 +20,9 @@ var TalkToMe = {
     }
 }
 
-// Setup the main event listeners
-window.addEventListener("UIReady", Callback(TalkToMe.onUIReady, TalkToMe), false);
-window.addEventListener("load", Callback(TalkToMe.onLoad, TalkToMe), false);
+// Try to load into a window, if it is premature listen for events.
+if (window.document.readyState == "complete")
+    TalkToMe.onUIReady(null);
+else 
+    window.addEventListener("UIReady",
+                            Callback(TalkToMe.onUIReady, TalkToMe), false);

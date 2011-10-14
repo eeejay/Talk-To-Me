@@ -1,23 +1,49 @@
-Components.utils.import("resource://talktome/content/utils.js");
-
-try {
-    Components.utils.import("resource://talktome/content/dom_walker.js");
-} catch (e) {
-    console.printException(e);
-}
-
 var Cc = Components.classes;
 var Ci = Components.interfaces;
+var Cu = Components.utils;
+
+Cu.import("resource://gre/modules/Services.jsm");
+
+try {
+    contentInit ();
+} catch (e) {
+    addMessageListener(
+        "TalkToMe:Bootstrap", function (message) {
+            let data = message.json;
+            let resource = Services.io.getProtocolHandler("resource").
+                QueryInterface(Ci.nsIResProtocolHandler);
+            
+            dump ("creating subsitution\n");
+            let alias = Services.io.newURI(data.installPathString, null, null);
+            resource.setSubstitution(data.extName, alias);
+            
+            contentInit();
+        }
+    );
+    sendAsyncMessage("TalkToMe:BootstrapMe");
+}
 
 var domWalker = null;
 
-console.log("content-script.js");
+function contentInit () {
+    Cu.import("resource://talktome/content/utils.js");
+    Cu.import("resource://talktome/content/dom_walker.js");
+    
+    addEventListener('DOMContentLoaded',
+                     Callback(contentLoadedHandler));
+    addMessageListener("TalkToMe:Navigate",
+                       Callback(navigateHandler));
+    addMessageListener("TalkToMe:Activate",
+                       Callback(activateHandler));
+    addMessageListener("TalkToMe:CurrentBounds",
+                       Callback(currentBoundsHandler));
+    addEventListener("MozScrolledAreaChanged",
+                     Callback(currentBoundsHandler));
 
-addEventListener('DOMContentLoaded', Callback(contentLoadedHandler));
-addMessageListener("TalkToMe:Navigate", Callback(navigateHandler));
-addMessageListener("TalkToMe:Activate", Callback(activateHandler));
-addMessageListener("TalkToMe:CurrentBounds", Callback(currentBoundsHandler));
-addEventListener("MozScrolledAreaChanged", Callback(currentBoundsHandler));
+    if (content.document.readyState == "complete")
+        contentLoadedHandler({target: content.document});
+}
+
 
 function WebProgressListener() {
     let flags = Ci.nsIWebProgress.NOTIFY_ALL;
@@ -93,7 +119,7 @@ try {
 
 function contentLoadedHandler (e) {
     // only interested in top-level.
-    if (content.document != e.target && e.target.location != "about:blank")
+    if (content.document != e.target || e.target.location == "about:blank")
         return;
 
     sendAsyncMessage("TalkToMe:SpeakAppState",

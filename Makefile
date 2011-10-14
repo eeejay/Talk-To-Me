@@ -41,7 +41,7 @@ snapshot: $(XPI_FILE)
 	@cp $(XPI_FILE) $(SNAPSHOT)
 
 run: $(XPI_FILE)
-	$(FENNEC_RUNNER) --addons=$< -b $(FENNEC_PATH) \
+	$(FENNEC_RUNNER) -b $(FENNEC_PATH) \
 		--app-arg="$(FENNEC_EXTRA_OPTIONS)"
 
 install-android: $(SOURCES)
