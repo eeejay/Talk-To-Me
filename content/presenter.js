@@ -6,32 +6,30 @@ EXPORTED_SYMBOLS = ["Presenter"];
 function Presenter(window, tts) {
     this.window = window;
     this.tts = tts;
-
-    window.messageManager.addMessageListener(
-        "TalkToMe:SpeakNav",
-        Callback(function(aMessage) {
+    this.messageListeners = { 
+        "TalkToMe:SpeakNav": Callback(function(aMessage) {
             this.speakNav(aMessage.json.phrase);
-        } ,this));
-    window.messageManager.addMessageListener(
-        "TalkToMe:SpeakPoint", Callback(function(aMessage) {
+        } ,this),
+        "TalkToMe:SpeakPoint": Callback(function(aMessage) {
             this.speakPoint(aMessage.json.phrase);
-        } ,this));
-    window.messageManager.addMessageListener(
-        "TalkToMe:ShowBounds", Callback(function(aMessage) {
+        } ,this),
+        "TalkToMe:ShowBounds": Callback(function(aMessage) {
             this.showBounds(aMessage.json.bounds);
-        } ,this));
-    window.messageManager.addMessageListener(
-        "TalkToMe:SpeakAppState",  Callback(function(aMessage) {
+        } ,this),
+        "TalkToMe:SpeakAppState":  Callback(function(aMessage) {
             this.speakAppState(aMessage.json.phrase);
-        } ,this));
-    window.messageManager.addMessageListener(
-        "TalkToMe:Activated",  Callback(function(aMessage) {
+        } ,this),
+        "TalkToMe:Activated":  Callback(function(aMessage) {
             this.playActivate();
-        } ,this));
-    window.messageManager.addMessageListener(
-        "TalkToMe:DeadEnd",  Callback(function(aMessage) {
+        } ,this),
+        "TalkToMe:DeadEnd":  Callback(function(aMessage) {
             this.playThud();
-        } ,this));
+        } ,this)
+    };
+
+    for (let listener in this.messageListeners)
+        this.window.messageManager.addMessageListener(
+            listener, this.messageListeners[listener]);
 
     this._highlighter = new _Highlighter(window);
 }
@@ -61,6 +59,9 @@ Presenter.prototype = {
     },
     remove: function remove () {
         this._highlighter.remove();
+        for (let listener in this.messageListeners)
+            this.window.messageManager.removeMessageListener(
+                listener, this.messageListeners[listener]);
     }
 };
 

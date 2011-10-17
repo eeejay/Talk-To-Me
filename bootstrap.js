@@ -126,7 +126,6 @@ function shutdown (data, reason) {
     // Unload all windows
     for (let i in unloadFuncs) {
         let unloadFunc = unloadFuncs[i];
-        console.log(unloadFunc);
         if (unloadFunc)
             unloadFunc();
     }

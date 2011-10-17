@@ -1,8 +1,14 @@
+dump ("TalkToMe:content\n");
+
 var Cc = Components.classes;
 var Ci = Components.interfaces;
 var Cu = Components.utils;
 
 Cu.import("resource://gre/modules/Services.jsm");
+
+var messageListeners = null;
+var eventListeners = null;
+var domWalker = null;
 
 try {
     contentInit ();
@@ -16,34 +22,43 @@ try {
             dump ("creating subsitution\n");
             let alias = Services.io.newURI(data.installPathString, null, null);
             resource.setSubstitution(data.extName, alias);
-            
+
             contentInit();
         }
     );
     sendAsyncMessage("TalkToMe:BootstrapMe");
 }
 
-var domWalker = null;
-
 function contentInit () {
     Cu.import("resource://talktome/content/utils.js");
     Cu.import("resource://talktome/content/dom_walker.js");
+
+    domWalker = new DOMWalker(content);
+    domWalker.newNodeFunc = Callback(newNodeFunc, this);
     
-    addEventListener('DOMContentLoaded',
-                     Callback(contentLoadedHandler));
-    addMessageListener("TalkToMe:Navigate",
-                       Callback(navigateHandler));
-    addMessageListener("TalkToMe:Activate",
-                       Callback(activateHandler));
-    addMessageListener("TalkToMe:CurrentBounds",
-                       Callback(currentBoundsHandler));
-    addEventListener("MozScrolledAreaChanged",
-                     Callback(currentBoundsHandler));
+    if (!messageListeners)
+        messageListeners = {
+            "TalkToMe:Navigate": Callback(navigateHandler),
+            "TalkToMe:Activate": Callback(activateHandler),
+            "TalkToMe:CurrentBounds": Callback(currentBoundsHandler),
+            "TalkToMe:Shutdown": Callback(shutdownHandler)
+        };
+
+    for (let listener in messageListeners)
+        addMessageListener(listener, messageListeners[listener]);
+
+    if (!eventListeners)
+        eventListeners = {
+            "MozScrolledAreaChanged" : Callback(currentBoundsHandler),
+            "DOMContentLoaded" : Callback(contentLoadedHandler)
+        };
+
+    for (let listener in eventListeners)
+        addEventListener(listener, eventListeners[listener], false);
 
     if (content.document.readyState == "complete")
         contentLoadedHandler({target: content.document});
 }
-
 
 function WebProgressListener() {
     let flags = Ci.nsIWebProgress.NOTIFY_ALL;
@@ -108,6 +123,14 @@ WebProgressListener.prototype = {
         }
         
         throw Components.results.NS_ERROR_NO_INTERFACE;
+    },
+
+    shutdown: function shutdown() {
+        let flags = Ci.nsIWebProgress.NOTIFY_ALL;
+
+        let webProgress = docShell.QueryInterface(Ci.nsIInterfaceRequestor)
+            .getInterface(Ci.nsIWebProgress);
+        webProgress.removeProgressListener(this, flags);
     }
 };
 
@@ -124,28 +147,27 @@ function contentLoadedHandler (e) {
 
     sendAsyncMessage("TalkToMe:SpeakAppState",
                      { phrase: content.document.title + " loaded." });
-    
-    domWalker = new DOMWalker(content);
-    domWalker.newNodeFunc = 
-        Callback(function (currentNode, reason) {
-            if (!currentNode) {
-                sendAsyncMessage("TalkToMe:" + "DeadEnd");
-                return;
-            }
 
-            let mname = (reason != "atpoint") ? "SpeakNav" : "SpeakPoint";
-            
-            sendAsyncMessage("TalkToMe:" + mname,
-                             { phrase: DOMWalker.accToPhrase(currentNode) });
-            let bounds = DOMWalker.accToRect(
-                content.window.pageXOffset,
-                content.window.pageYOffset,
-                currentNode,
-                // TODO: must be a better way to know if we are local.
-                (content.location == "about:home"));
-            sendAsyncMessage("TalkToMe:ShowBounds", { bounds: bounds });
-        }, this);
     domWalker.getDocRoot ();
+}
+
+function newNodeFunc (currentNode, reason) {
+    if (!currentNode) {
+        sendAsyncMessage("TalkToMe:" + "DeadEnd");
+        return;
+    }
+
+    let mname = (reason != "atpoint") ? "SpeakNav" : "SpeakPoint";
+    
+    sendAsyncMessage("TalkToMe:" + mname,
+                     { phrase: DOMWalker.accToPhrase(currentNode) });
+    let bounds = DOMWalker.accToRect(
+        content.window.pageXOffset,
+        content.window.pageYOffset,
+        currentNode,
+        // TODO: must be a better way to know if we are local.
+        (content.location == "about:home"));
+    sendAsyncMessage("TalkToMe:ShowBounds", { bounds: bounds });
 }
 
 function navigateHandler(message) {
@@ -179,4 +201,15 @@ function currentBoundsHandler() {
         // TODO: must be a better way to know if we are local.
         (content.location == "about:home"));
     sendAsyncMessage("TalkToMe:ShowBounds", { bounds: bounds });
+}
+
+function shutdownHandler() {
+    console.log("content shutdown");
+    for (let listener in messageListeners)
+        removeMessageListener(listener, messageListeners[listener]);
+
+    for (let listener in eventListeners)
+        removeEventListener(listener, messageListeners[listener], false);   
+
+    webProgressListener.shutdown();
 }

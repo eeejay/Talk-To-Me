@@ -14,8 +14,6 @@ var TalkToMe = {
     onUIReady : function (aEvent) {
         console.log("onUIReady");
 
-        console.dumpObj(window.messageManager);
-
         // Load content script
         window.messageManager.addMessageListener(
             "TalkToMe:BootstrapMe",
@@ -28,7 +26,6 @@ var TalkToMe = {
             PlatformUtils.resolveResourceURI(
                 "resource://talktome/content/content-script.js"), true);
 
-
         this.presenter = new Presenter (window, window.tts);
         this.navigator = new Navigator (window, this.presenter);
         this.inputManager = new InputManager(window, this.navigator);
@@ -38,6 +35,7 @@ var TalkToMe = {
     unloadFunc: function () {
         this.presenter.remove();
         this.inputManager.stop();
+        window.messageManager.sendAsyncMessage("TalkToMe:Shutdown");
     }
 }
 

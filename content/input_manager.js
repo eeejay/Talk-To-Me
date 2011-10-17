@@ -7,30 +7,27 @@ function InputManager (window, navigator) {
     this.window = window;
     this.navigator = navigator;
     this.gestureMangler = new GestureMangler(window);
+
+    this.eventCallbackPairs = {
+        'keypress': Callback(this.keypressHandler, this),
+        'TalkToMe::Swipe': Callback(this.swipeHandler, this),
+        'TalkToMe::Tap': Callback(this.tapHandler, this),
+        'TalkToMe::Dwell': Callback(this.dwellHandler, this)
+    };
 }
 
 InputManager.prototype.start = function start () {
     this.gestureMangler.enable();
-    this.window.addEventListener('keypress',
-                                 Callback(this.keypressHandler, this), false);
-    this.window.addEventListener('TalkToMe::Swipe',
-                                 Callback(this.swipeHandler, this),false);
-    this.window.addEventListener('TalkToMe::Tap',
-                                 Callback(this.tapHandler, this), false);
-    this.window.addEventListener('TalkToMe::Dwell',
-                                 Callback(this.dwellHandler, this), false);
+    for (let event in this.eventCallbackPairs)
+        this.window.addEventListener(
+            event, this.eventCallbackPairs[event], false);
 };
 
 InputManager.prototype.stop = function stop () {
     this.gestureMangler.disable();
-    this.window.removeEventListener('keypress',
-                                    Callback(this.keypressHandler, this), false);
-    this.window.removeEventListener('TalkToMe::Swipe',
-                                    Callback(this.swipeHandler, this),false);
-    this.window.removeEventListener('TalkToMe::Tap',
-                                    Callback(this.tapHandler, this), false);
-    this.window.removeEventListener('TalkToMe::Dwell',
-                               Callback(this.dwellHandler, this), false);
+    for (let event in this.eventCallbackPairs)
+        this.window.removeEventListener(
+            event, this.eventCallbackPairs[event], false);
 };
 
 
