@@ -58,6 +58,9 @@ Presenter.prototype = {
     },
     playThud: function playThud (phrase) {
         this.tts.playEarcon("[thud]", TextToSpeech.QUEUE_ADD);
+    },
+    remove: function remove () {
+        this._highlighter.remove();
     }
 };
 
@@ -74,12 +77,12 @@ function _Highlighter(window) {
     let document = window.document;
     let stack = window.document.getElementById('stack');
 
-    let highlightLayer = document.createElementNS(
+    this.highlightLayer = document.createElementNS(
         "http://www.w3.org/1999/xhtml", "div");
-    highlightLayer.style.pointerEvents = "none";
-    highlightLayer.style.MozStackSizing = 'ignore';
-    highlightLayer.style.position = "relative";
-    stack.appendChild(highlightLayer);
+    this.highlightLayer.style.pointerEvents = "none";
+    this.highlightLayer.style.MozStackSizing = 'ignore';
+    this.highlightLayer.style.position = "relative";
+    stack.appendChild(this.highlightLayer);
     
     this._highlightRect = document.createElementNS(
         "http://www.w3.org/1999/xhtml", "div");
@@ -87,7 +90,7 @@ function _Highlighter(window) {
     this._highlightRect.style.borderStyle = "solid";
     this._highlightRect.style.pointerEvents = "none";
     this._highlightRect.style.display = "none";
-    highlightLayer.appendChild(this._highlightRect);
+    this.highlightLayer.appendChild(this._highlightRect);
 
     // style it
     this._highlightRect.style.borderColor = this.borderColor;
@@ -113,13 +116,13 @@ function _Highlighter(window) {
     contentShowingObserver.addEventListener(
         "broadcast",
         Callback(function (e) {
-            console.log(highlightLayer.getAttribute("disabled") == "true");
-            if (highlightLayer.getAttribute("disabled") == "true")
+            console.log(this.highlightLayer.getAttribute("disabled") == "true");
+            if (this.highlightLayer.getAttribute("disabled") == "true")
                 this.hide ();
             else
                 this.show ();
         }, this));
-    highlightLayer.appendChild(contentShowingObserver)
+    this.highlightLayer.appendChild(contentShowingObserver)
 
     // Hook in to relevant events
     window.Browser.controlsScrollbox.addEventListener(
@@ -203,4 +206,9 @@ _Highlighter.prototype.askForBounds = function () {
 
 _Highlighter.prototype.showBoundsHandler = function (aMessage) {
     this.highlight(aMessage.json.bounds);
-}
+};
+
+_Highlighter.prototype.remove = function () {
+    console.log("Removing highlighter");
+    this.highlightLayer.parentNode.removeChild(this.highlightLayer);
+};

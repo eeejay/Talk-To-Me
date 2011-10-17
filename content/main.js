@@ -17,8 +17,15 @@ var TalkToMe = {
         this.navigator = new Navigator (window, this.presenter);
         this.inputManager = new InputManager(window, this.navigator);
         this.inputManager.start();
+    },
+
+    unloadFunc: function () {
+        this.presenter.remove();
+        this.inputManager.stop();
     }
 }
+
+var unloadFunc = Callback(TalkToMe.unloadFunc, TalkToMe);
 
 // Try to load into a window, if it is premature listen for events.
 if (window.document.readyState == "complete")

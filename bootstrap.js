@@ -12,6 +12,8 @@ var tts = null;
 
 var externalMediaPath = null;
 
+var unloadFuncs = [];
+
 /* From http://starkravingfinkle.org/blog/2011/01/bootstrap-jones-adventures-in-restartless-add-ons/ */
 
 var windowListener = {
@@ -50,6 +52,7 @@ function loadIntoWindow (aWindow, data) {
     aWindow.tts = tts;
     let _globals = {window: aWindow};
     loader.loadSubScript("resource://talktome/content/main.js", _globals);
+    unloadFuncs.push(_globals.unloadFunc);
     try {
         loadIntoContent (aWindow, data);
     } catch (e) {
@@ -140,6 +143,14 @@ function shutdown (data, reason) {
     let resource = Services.io.getProtocolHandler("resource").
         QueryInterface(Ci.nsIResProtocolHandler);
     resource.setSubstitution(data.id.substring(0, data.id.indexOf('@')), null);
+
+    // Unload all windows
+    for (let i in unloadFuncs) {
+        let unloadFunc = unloadFuncs[i];
+        console.log(unloadFunc);
+        if (unloadFunc)
+            unloadFunc();
+    }
 }
 
 function uninstall (reason, data) {

@@ -109,8 +109,10 @@ TextToSpeech.prototype.setPitch = function (f) {
 TextToSpeech.prototype.shutdown = function () {
     console.log("TextToSpeech.shutdown");
 
-    if (this.android_tts)
+    if (this.android_tts) {
         this.android_tts.shutdown();
+        this.android_tts = null;
+    }
 }
 
 TextToSpeech.QUEUE_FLUSH = 0;
