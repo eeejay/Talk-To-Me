@@ -27,37 +27,16 @@ var windowListener = {
   onWindowTitleChange: function(aWindow, aTitle) { }
 };
 
-function loadIntoContent (aWindow, data) {
-    let contentScript = data.installPath.clone();
-    contentScript.append('content');
-    contentScript.append('content-script.js');
-    let contentURI = Services.io.newFileURI(contentScript);
-    try {
-        aWindow.messageManager.addMessageListener(
-            "TalkToMe:BootstrapMe",
-            function (message) {
-                let extName = data.id.substring(0, data.id.indexOf('@'));
-                let installPathURI = Services.io.newFileURI(data.installPath);
-                aWindow.messageManager.sendAsyncMessage(
-                    "TalkToMe:Bootstrap",
-                    {extName: extName, installPathString: installPathURI.spec});
-            });
-        aWindow.messageManager.loadFrameScript(contentURI.spec, true);
-    } catch (e) {
-        console.printException(e);
-    }
-}
-
 function loadIntoWindow (aWindow, data) {
     aWindow.tts = tts;
-    let _globals = {window: aWindow};
+    let extName = data.id.substring(0, data.id.indexOf('@'));
+    let installPathURI = Services.io.newFileURI(data.installPath);
+
+    let _globals = {window: aWindow,
+                    extName: extName,
+                    installPathURI: installPathURI};
     loader.loadSubScript("resource://talktome/content/main.js", _globals);
     unloadFuncs.push(_globals.unloadFunc);
-    try {
-        loadIntoContent (aWindow, data);
-    } catch (e) {
-        console.printException(e);
-    }
  }
 
 function initialize_tts (newInstall, installPath, doneFunc) {
