@@ -57,7 +57,7 @@ function loadIntoWindow (aWindow, data) {
     }
  }
 
-function initialize_tts (newInstall, installPath) {
+function initialize_tts (newInstall, installPath, doneFunc) {
     console.log("initialize_tts");
 
     Cu.import("resource://talktome/content/speech.js");
@@ -81,12 +81,17 @@ function initialize_tts (newInstall, installPath) {
                             QueryInterface(Components.interfaces.nsILocalFile));
             PlatformUtils.asyncFilesCopy (
                 _files, mediaPath,
-                Callback(function () {tts = new TextToSpeech(mediaPath, true);}));
+                Callback(function () {
+                    tts = new TextToSpeech(mediaPath, true);
+                    doneFunc();
+                }));
         } else {
             tts = new TextToSpeech(mediaPath, true);
+            doneFunc();
         }
     } else {
         tts = new TextToSpeech(mediaPath, PlatformUtils.isAndroid());
+        doneFunc();
     }
 }
 
@@ -106,23 +111,25 @@ function startup (data, reason) {
     }
 
     try {
-        initialize_tts ((reason == ADDON_INSTALL ||
-                         reason == ADDON_UPGRADE ||
-                         reason == ADDON_DOWNGRADE), data.installPath);
+        initialize_tts (
+            (reason == ADDON_INSTALL ||
+             reason == ADDON_UPGRADE ||
+             reason == ADDON_DOWNGRADE),
+            data.installPath,
+            Callback(function () {
+                // Load into any existing windows
+                let enumerator = Services.wm.getEnumerator("navigator:browser");
+                while (enumerator.hasMoreElements()) {
+                    let win = enumerator.getNext();
+                    loadIntoWindow(win, data);
+                }
+                // Load into any new windows
+                windowListener.data = data;
+                Services.wm.addListener(windowListener);
+            }));
     } catch (e) {
         console.printException (e);
     }
-
-    // Load into any existing windows
-    let enumerator = Services.wm.getEnumerator("navigator:browser");
-    while (enumerator.hasMoreElements()) {
-        let win = enumerator.getNext();
-        loadIntoWindow(win, data);
-    }
-
-    // Load into any new windows
-    windowListener.data = data;
-    Services.wm.addListener(windowListener);
 }
 
 function install (data, reason) { }
