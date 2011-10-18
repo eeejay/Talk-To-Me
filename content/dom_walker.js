@@ -83,7 +83,7 @@ DOMWalker.prototype._searchSubtreeDepth = function (obj, pred, sibling) {
 DOMWalker.prototype._nextNode = function (node, sibling) {
     var nextNode = node;
 
-    while (nextNode)  {
+    while (nextNode && nextNode != this.docRoot)  {
         try {
             if (nextNode[sibling])
                 return nextNode[sibling];
