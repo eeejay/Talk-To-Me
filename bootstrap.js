@@ -87,6 +87,8 @@ function startup (data, reason) {
 
     try {
         Cu.import("resource://talktome/content/utils.js");
+        Cu.import("resource://talktome/content/about.js");
+        AboutHandler.registerFactory();
     } catch (e) {
         dump ("BOOTSTRAP ERROR: " + e + "\n");
         throw e;

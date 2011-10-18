@@ -3,13 +3,15 @@ RDF = install.rdf
 CONTENT_SOURCES = $(shell ls content/*.js)
 MEDIA_FILES = $(shell ls media/*.wav)
 LOCALE_FILES = $(shell ls locale/*/*.properties)
+DOC_FILES = $(shell find doc -name '*' -a \! -name '*~' -a -type f)
 
 SOURCES = \
 	bootstrap.js \
 	$(RDF) \
 	$(CONTENT_SOURCES) \
 	$(MEDIA_FILES) \
-	$(LOCALE_FILES)
+	$(LOCALE_FILES) \
+	$(DOC_FILES)
 
 APP_NAME := \
 	${shell sed -n 's/.*<em:id>\([^<]*\)@.*<\/em:id>.*/\1/p' < $(RDF)}
