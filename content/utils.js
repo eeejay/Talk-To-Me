@@ -7,7 +7,7 @@ Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");  
 Cu.import("resource://gre/modules/Services.jsm");
 
-var EXPORTED_SYMBOLS = ["console", "PlatformUtils", "Callback"];
+var EXPORTED_SYMBOLS = ["console", "PlatformUtils", "Callback", "StringBundle"];
 
 // Console
 
@@ -199,4 +199,43 @@ function Callback (func, self) {
             console.printException(e, func.name);
         }
     };
+}
+
+// Localization
+
+function StringBundle () {
+    let locale = Cc["@mozilla.org/chrome/chrome-registry;1"]
+        .getService(Ci.nsIXULChromeRegistry).getSelectedLocale("global");
+
+    let locales = [locale, locale.split('-')[0]];
+
+    for (let i in locales) {
+        let uri = Services.io.newURI(
+            "resource://talktome/locale/" + locales[i] + "/talktome.properties",
+            null, null);
+        let file = uri.QueryInterface(Components.interfaces.nsIFileURL).file;
+
+        console.log(file.path);
+
+        if (file.exists()) {
+            this._bundle = Components.classes["@mozilla.org/intl/stringbundle;1"]
+                .getService(Components.interfaces.nsIStringBundleService)  
+                .createBundle(uri.spec); 
+            return;
+        }
+    }
+
+    throw new Error("No strings for locale '" +
+                    locale + 
+                    "', and no fallback found");
+}
+
+StringBundle.prototype.getStr = function (msg, args) {
+    // from https://developer.mozilla.org/en/Code_snippets/Miscellaneous#Using_string_bundles_from_JavaScript
+    if (args){
+        args = Array.prototype.slice.call(arguments, 1);
+        return this._bundle.formatStringFromName(msg,args,args.length);
+    } else {
+        return this._bundle.GetStringFromName(msg);
+    }
 }

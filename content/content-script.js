@@ -9,6 +9,7 @@ Cu.import("resource://gre/modules/Services.jsm");
 var messageListeners = null;
 var eventListeners = null;
 var domWalker = null;
+var stringBundle = null;
 
 try {
     contentInit ();
@@ -33,8 +34,10 @@ function contentInit () {
     Cu.import("resource://talktome/content/utils.js");
     Cu.import("resource://talktome/content/dom_walker.js");
 
-    domWalker = new DOMWalker(content);
-    domWalker.newNodeFunc = Callback(newNodeFunc, this);
+    domWalker = new DOMWalker (content);
+    domWalker.newNodeFunc = Callback (newNodeFunc, this);
+
+    stringBundle = new StringBundle ();
     
     if (!messageListeners)
         messageListeners = {
@@ -103,7 +106,7 @@ WebProgressListener.prototype = {
             if ((aStateFlags & load_start) == load_start &&
                 content.location != "about:blank")  {
                 sendAsyncMessage("TalkToMe:SpeakAppState",
-                                 { phrase: "Loading" });
+                                 { phrase: stringBundle.getStr("loading") });
             }
         } catch (e) {
             console.printException(e);
@@ -146,7 +149,7 @@ function contentLoadedHandler (e) {
         return;
 
     sendAsyncMessage("TalkToMe:SpeakAppState",
-                     { phrase: content.document.title + " loaded." });
+                     { phrase: stringBundle.getStr("loaded", e.target.title) });
 
     domWalker.getDocRoot ();
 }
