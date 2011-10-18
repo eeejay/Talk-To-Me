@@ -14,6 +14,8 @@ var externalMediaPath = null;
 
 var unloadFuncs = [];
 
+var firstRun = false;
+
 /* From http://starkravingfinkle.org/blog/2011/01/bootstrap-jones-adventures-in-restartless-add-ons/ */
 
 var windowListener = {
@@ -37,6 +39,10 @@ function loadIntoWindow (aWindow, data) {
                     installPathURI: installPathURI};
     loader.loadSubScript("resource://talktome/content/main.js", _globals);
     unloadFuncs.push(_globals.unloadFunc);
+
+    if (firstRun && aWindow.Browser) {
+        aWindow.Browser.addTab("about:talktome", true, null, {});
+    }
  }
 
 function initialize_tts (newInstall, installPath, doneFunc) {
@@ -79,6 +85,9 @@ function initialize_tts (newInstall, installPath, doneFunc) {
 
 function startup (data, reason) {
     dump ("started! " + data.id.substring(0, data.id.indexOf('@')) + "\n");
+
+    firstRun = (reason == ADDON_INSTALL);
+
     let resource = Services.io.getProtocolHandler("resource").
         QueryInterface(Ci.nsIResProtocolHandler);
 
