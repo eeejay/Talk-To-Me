@@ -8,21 +8,27 @@ function Presenter(window, tts) {
     this.tts = tts;
     this.messageListeners = { 
         "TalkToMe:SpeakNav": Callback(function(aMessage) {
+            if (!aMessage.target.active) return;
             this.speakNav(aMessage.json.phrase);
         } ,this),
         "TalkToMe:SpeakPoint": Callback(function(aMessage) {
+            if (!aMessage.target.active) return;
             this.speakPoint(aMessage.json.phrase);
         } ,this),
         "TalkToMe:ShowBounds": Callback(function(aMessage) {
+            if (!aMessage.target.active) return;
             this.showBounds(aMessage.json.bounds);
         } ,this),
         "TalkToMe:SpeakAppState":  Callback(function(aMessage) {
+            if (!aMessage.target.active) return;
             this.speakAppState(aMessage.json.phrase);
         } ,this),
         "TalkToMe:Activated":  Callback(function(aMessage) {
+            if (!aMessage.target.active) return;
             this.playActivate();
         } ,this),
         "TalkToMe:DeadEnd":  Callback(function(aMessage) {
+            if (!aMessage.target.active) return;
             this.playThud();
         } ,this)
     };
