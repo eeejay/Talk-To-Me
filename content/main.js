@@ -14,18 +14,6 @@ var TalkToMe = {
     onUIReady : function (aEvent) {
         console.log("onUIReady");
 
-        // Load content script
-        window.messageManager.addMessageListener(
-            "TalkToMe:BootstrapMe",
-            function (message) {
-                window.messageManager.sendAsyncMessage(
-                    "TalkToMe:Bootstrap",
-                    {extName: extName, installPathString: installPathURI.spec});
-            });
-        window.messageManager.loadFrameScript(
-            PlatformUtils.resolveResourceURI(
-                "resource://talktome/content/content-script.js"), true);
-
         this.presenter = new Presenter (window, window.tts);
         this.navigator = new Navigator (window, this.presenter);
         this.inputManager = new InputManager(window, this.navigator);
@@ -40,6 +28,18 @@ var TalkToMe = {
 }
 
 var unloadFunc = Callback(TalkToMe.unloadFunc, TalkToMe);
+
+// Load content script
+window.messageManager.addMessageListener(
+    "TalkToMe:BootstrapMe",
+    function (message) {
+        window.messageManager.sendAsyncMessage(
+            "TalkToMe:Bootstrap",
+            {extName: extName, installPathString: installPathURI.spec});
+    });
+window.messageManager.loadFrameScript(
+    PlatformUtils.resolveResourceURI(
+        "resource://talktome/content/content-script.js"), true);
 
 // Try to load into a window, if it is premature listen for events.
 if (window.document.readyState == "complete")
