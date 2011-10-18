@@ -16,6 +16,9 @@ function DOMWalker(content, newNodeFunc) {
     this.content = content;
     this.docRoot = null;
     this.currentNode = null;
+    this.isContentProcess =
+        (Cc["@mozilla.org/xre/app-info;1"]
+         .getService(Ci.nsIXULRuntime).processType == 2);
 }
 
 // borrowed from a11y mochitests.
@@ -32,8 +35,6 @@ DOMWalker.prototype.getDocRoot = function(onLoadFunc) {
         this.docRoot = docRoot;
         this.currentNode = this._searchSubtreeDepth(
             this.docRoot, this._isItemOfInterest);
-        
-        // DOMWalker.printTree (this.docRoot);
         
         if (onLoadFunc)
             onLoadFunc(this.currentNode, "onload");
@@ -169,6 +170,13 @@ DOMWalker.prototype.activate = function (node) {
 DOMWalker.prototype.navigateToPoint = function (x, y) {
     if (!this.docRoot) return;
 
+    if (!this.isContentProcess) {
+        let docBounds = DOMWalker.getBounds(this.docRoot);
+
+        x += docBounds.x;
+        y += docBounds.y;
+    }
+
     let child = this.docRoot.getChildAtPoint(x, y);
 
     while (child) {
@@ -191,38 +199,31 @@ DOMWalker.prototype.navigateToPoint = function (x, y) {
     }
 };
 
-// Static utility methods
+DOMWalker.prototype.nodeRect = function nodeRect (acc) {
+    acc = acc || this.currentNode;
 
-DOMWalker.accToRect = function accToRect (offsetx, offsety, acc, islocal) {
     if (!acc) // Bady bad
         return {top: 0, bottom: 0, left: 0, right: 0};
 
-    if (islocal) {
-        acc.QueryInterface(Ci.nsIAccessNode);
-        let node = acc.DOMNode;
+    let offsetX = this.content.window.pageXOffset;
+    let offsetY = this.content.window.pageYOffset;
 
-        if (!node.getBoundingClientRect)
-            node = node.parentNode;
+    if (!this.isContentProcess) {
+        let docBounds = DOMWalker.getBounds(this.docRoot);
 
-        let rv = node.getBoundingClientRect();
-        
-        return {top: rv.top,
-                left: rv.left,
-                bottom: rv.bottom,
-                right: rv.right};
+        offsetX -= docBounds.x;
+        offsetY -= docBounds.y;
     }
 
-    let x = {}, y = {}, w = {}, h = {};
-    try {
-        acc.getBounds(x, y, w, h);
-    } catch (e) {
-        x.value = y.value = w.value = h.value = 0;
-    }
-    return {left: x.value + offsetx,
-            top: y.value + offsety,
-            right: x.value + w.value + offsetx,
-            bottom: y.value + h.value + offsety};
+    let bounds = DOMWalker.getBounds(acc);
+
+    return {left: bounds.x + offsetX,
+            top: bounds.y + offsetY,
+            right: bounds.x + bounds.w + offsetX,
+            bottom: bounds.y + bounds.h + offsetY};
 };
+
+// Static utility methods
 
 DOMWalker.accToPhrase = function accToPhrase (acc) {
     if (!acc) // Grave error
@@ -264,11 +265,17 @@ DOMWalker.accToString = function accToString (acc) {
     let _states = gAccRetrieval.getStringStates(state.value, ext_state.value);
     let states = [];
     
+
+    let bounds = DOMWalker.getBounds(acc);
+    
+    let boundString = " (" + bounds.x + ", " + bounds.y +
+        ", " + bounds.w + ", " + bounds.h + ")";
+
     for (let i=0;i<_states.length;i++)
         states.push(_states.item(i));
 
     return "[ " + acc.name + " | " + gAccRetrieval.getStringRole(acc.role) +
-        " ] " + states + text;
+        " ] " + states + text + boundString;
 };
 
 DOMWalker.getAccessible = function getAccessible (node) {
@@ -285,7 +292,7 @@ DOMWalker.printTree = function printTree (acc, indent) {
         padding += ".";
     }
 
-    console.log(padding + accToString(acc));
+    console.log(padding + DOMWalker.accToString(acc));
 
     var child = acc.firstChild;
     while (child) {
@@ -296,4 +303,16 @@ DOMWalker.printTree = function printTree (acc, indent) {
             break;
         }
     }
+};
+
+DOMWalker.getBounds = function getBounds (acc) {
+    let x = {}, y = {}, w = {}, h = {};
+
+    try {
+        acc.getBounds(x, y, w, h);
+    } catch (e) {
+        x.value = y.value = w.value = h.value = 0;
+    }
+
+    return {x: x.value, y: y.value, w: w.value, h: h.value};
 };

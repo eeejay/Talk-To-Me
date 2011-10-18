@@ -10,9 +10,6 @@ var messageListeners = null;
 var eventListeners = null;
 var domWalker = null;
 var stringBundle = null;
-var isContentProcess =
-    (Components.classes["@mozilla.org/xre/app-info;1"]
-     .getService(Components.interfaces.nsIXULRuntime).processType == 2);
 
 try {
     contentInit ();
@@ -167,12 +164,7 @@ function newNodeFunc (currentNode, reason) {
     
     sendAsyncMessage("TalkToMe:" + mname,
                      { phrase: DOMWalker.accToPhrase(currentNode) });
-    let bounds = DOMWalker.accToRect(
-        content.window.pageXOffset,
-        content.window.pageYOffset,
-        currentNode,
-        !isContentProcess);
-    sendAsyncMessage("TalkToMe:ShowBounds", { bounds: bounds });
+    sendAsyncMessage("TalkToMe:ShowBounds", { bounds: domWalker.nodeRect () });
 }
 
 function navigateHandler(message) {
@@ -199,13 +191,7 @@ function activateHandler(message) {
 function currentBoundsHandler() {
     if (!domWalker || !domWalker.currentNode) return;
 
-    let bounds = DOMWalker.accToRect(
-        content.window.pageXOffset,
-        content.window.pageYOffset,
-        domWalker.currentNode,
-        // TODO: must be a better way to know if we are local.
-        (content.location == "about:home"));
-    sendAsyncMessage("TalkToMe:ShowBounds", { bounds: bounds });
+    sendAsyncMessage("TalkToMe:ShowBounds", { bounds: domWalker.nodeRect () });
 }
 
 function shutdownHandler() {
