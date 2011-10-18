@@ -10,6 +10,9 @@ var messageListeners = null;
 var eventListeners = null;
 var domWalker = null;
 var stringBundle = null;
+var isContentProcess =
+    (Components.classes["@mozilla.org/xre/app-info;1"]
+     .getService(Components.interfaces.nsIXULRuntime).processType == 2);
 
 try {
     contentInit ();
@@ -168,8 +171,7 @@ function newNodeFunc (currentNode, reason) {
         content.window.pageXOffset,
         content.window.pageYOffset,
         currentNode,
-        // TODO: must be a better way to know if we are local.
-        (content.location == "about:home"));
+        !isContentProcess);
     sendAsyncMessage("TalkToMe:ShowBounds", { bounds: bounds });
 }
 
