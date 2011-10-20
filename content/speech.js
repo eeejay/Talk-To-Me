@@ -27,6 +27,7 @@ TextToSpeech.prototype._register_earcons = function () {
         console.log ("Adding earcon: " + _path.path +
                      ((rv == 0) ? " (success)" : " (fail)"));
     }
+    this._registered_earcons = true;
 }
 
 TextToSpeech.prototype._get_android_tts = function () {
