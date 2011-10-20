@@ -4,6 +4,7 @@ from optparse import OptionParser
 import sys, subprocess, os
 import shlex
 import re
+from time import sleep
 
 parser = OptionParser()
 parser.add_option("--adb", dest="adb",
@@ -26,6 +27,14 @@ def _run_android_cmd(adb, cmd):
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE).communicate()
 
+def _getProc(adb, pkg_name):
+    procs, _ = _run_android_cmd(adb, "ps")
+    for proc in procs.split('\n'):
+        if options.pkg_name in proc:
+            r = re.split(r'\s+', proc)
+            return r[1], r[4]
+    return None, None
+
 def _path_not_exists(adb, path):
     res, _ = _run_android_cmd(adb, 'ls %s' % path)
     return "No such file or directory" in res
@@ -43,11 +52,9 @@ if __name__ == "__main__":
                          "am start -a android.activity.MAIN -n %s/%s.App" %
                          (options.pkg_name, options.pkg_name))
     elif args[0] == "kill":
-        procs, _ = _run_android_cmd(options.adb, "ps")
-        for proc in procs.split('\n'):
-            if options.pkg_name in proc:
-                pid = re.split(r'\s+', proc)[1]
-                _run_android_cmd(options.adb, "kill %s" % pid)
+        pid, _ = _getProc(options.adb, options.pkg_name)
+        if pid:
+            _run_android_cmd(options.adb, "kill %s" % pid)
     elif args[0] == "mkdirs":
         p = args[1]
         if not os.path.isabs(p):
@@ -57,3 +64,17 @@ if __name__ == "__main__":
             print currpath, _path_not_exists(options.adb, currpath)
             if _path_not_exists(options.adb, currpath):
                  print _run_android_cmd(options.adb, "mkdir %s" % currpath)
+    elif args[0] == "profile":
+        pid, _ = _getProc(options.adb, options.pkg_name)
+        if pid:
+            _run_android_cmd(options.adb, "kill %s" % pid)
+        _run_android_cmd(
+            options.adb,
+            'am start -a android.activity.MAIN -n %s/%s.App --es args "%s"' %
+                         (options.pkg_name, options.pkg_name,
+                          "--url http://googlecom"))
+        for i in xrange(60):
+            sleep(2)
+            pid, rss = _getProc(options.adb, options.pkg_name)
+            print rss
+        _run_android_cmd(options.adb, "kill %s" % pid)
