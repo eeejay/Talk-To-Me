@@ -10,59 +10,36 @@ function GestureMangler (window) {
 
     this.eventGenerator = new GestureEventGenerator(window);
 
-    let w = window.wrappedJSObject;
-
-    if (!w.MouseModule) {
-        console.warning("No MouseModule found");
-        return;
-    }
-
-    this._origMouseHandler = w.MouseModule.prototype.handleEvent;
-
-    if (!w.GestureModule) {
-        console.warning("No GestureModule found");
-        return;
-    }
-
-    this._origGestureHandler = w.GestureModule.prototype.handleEvent;
-    
+    this._origHandler = this.window.BrowserEventHandler.handleEvent;
 }
 
 GestureMangler.prototype._setHandler = function (module, handler) {
-    module.prototype.handleEvent = handler;
+    module.handleEvent = handler;
 }
 
 GestureMangler.prototype.enable = function () {
     let w = this.window.wrappedJSObject;
-
-    this._setHandler(w.MouseModule,
+    
+    this._setHandler(this.window.BrowserEventHandler,
                      Callback(function (e) {
-                         if (!this.mouseHandler(e))
-                             this._origMouseHandler(e);
-                     }, this));
-
-    this._setHandler(w.GestureModule,
-                     Callback(function (e) {
-                         if (!this.gestureHandler(e))
-                             this._origGestureHandler(e);
+                         if (!this.eventHandler(e)) {
+                             this._origHandler(e);
+                         } else {
+                             e.stopPropagation();
+                             e.preventDefault();
+                         }
                      }, this));
 };
 
 GestureMangler.prototype.disable = function () {
-    let w = this.window.wrappedJSObject;
 
-    this._setHandler(w.MouseModule, this._origMouseHandler);
-    this._setHandler(w.GestureModule, this._origGestureHandler);
+    this._setHandler(this.window.BrowserEventHandler, this._origHandler);
     this.window.removeEventListener('keypress', this.keypressHandler, false);
 };
 
-GestureMangler.prototype.mouseHandler = function (e) {
-    if (!e.target.ownerDocument) {
-        console.warning("e.target.ownerDocument is null");
-        return false;
-    }
+GestureMangler.prototype.eventHandler = function (e) {
+    let window = this.window;
 
-    let window = e.target.ownerDocument.defaultView;
     switch (e.type) {
     case "mousedown":
         this.eventGenerator.down(e.timeStamp, e.clientX, e.clientY);
@@ -75,30 +52,10 @@ GestureMangler.prototype.mouseHandler = function (e) {
         return true;
     case "click":
         return true;
-    default:
-        return false;
-        
-    }
-};
-
-GestureMangler.prototype.gestureHandler = function (e) {
-    if (!e.target.ownerDocument) {
-        console.warning("e.target.ownerDocument is null");
-        return false;
-    }
-
-    let window = e.target.ownerDocument.defaultView;
-    let mm = window.Browser.selectedTab.browser.messageManager
-
-    if (e.type == "MozMagnifyGestureStart" ||
-        e.type == "MozMagnifyGestureUpdate" ||
-        e.type == "MozMagnifyGesture")
-        return;
-
-    if (e.type == "MozSwipeGesture") {
+    case "MozSwipeGesture":
         this.eventGenerator.doingMozGesture = true;
         let direction;
-
+            
         switch (e.direction) {
         case e.DIRECTION_RIGHT:
             direction = "right";
@@ -115,13 +72,12 @@ GestureMangler.prototype.gestureHandler = function (e) {
         default:
             break;
         }
-
         this.eventGenerator.emitEvent("Swipe",
                                       {direction: direction, fingers: 3});
         return true;
+    default:
+        return false;
     }
-
-    return false;
 };
 
 function GestureEventGenerator (window) {

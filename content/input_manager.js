@@ -34,9 +34,9 @@ InputManager.prototype.stop = function stop () {
 InputManager.prototype.dwellHandler = function (e) {
     // navigate to item under finger
     let d = e.detail[e.detail.length-1];
-    let {x: x, y: y} = this.window.Browser.selectedTab.browser.
-        transformClientToBrowser (d.x, d.y);
-    this.navigator.toPoint(x, y);
+//   let {x: x, y: y} = this.window.BrowserApp.selectedTab.browser.
+//        transformClientToBrowser (d.x, d.y);
+    this.navigator.toPoint(d.x, d.y);
 };
 
 InputManager.prototype.tapHandler = function (e) {
@@ -45,7 +45,7 @@ InputManager.prototype.tapHandler = function (e) {
 }
 
 InputManager.prototype.swipeHandler = function (e) {
-    let mm = this.window.Browser.selectedTab.browser.messageManager;
+    let mm = this.window.BrowserApp.selectedTab.browser.messageManager;
     let detail = e.detail[e.detail.length-1];
     if (detail.fingers == 1) {
 
@@ -76,7 +76,7 @@ InputManager.prototype.swipeHandler = function (e) {
 InputManager.prototype.keypressHandler = function (e) {
     if (e.target.nodeName == "html") return;
     if (e.altKey) {
-        let mm = this.window.Browser.selectedTab.browser.messageManager;
+        let mm = this.window.BrowserApp.selectedTab.browser.messageManager;
         switch (e.keyCode) {
         case e.DOM_VK_DOWN:
             this.navigator.next();
