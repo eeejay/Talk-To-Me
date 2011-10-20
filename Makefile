@@ -53,18 +53,12 @@ run-no-addon:  $(XPI_FILE)
 	$(FENNEC_RUNNER) -b $(FENNEC_PATH) \
 		--app-arg="$(FENNEC_EXTRA_OPTIONS)"
 
-install-android: $(SOURCES)
+install-android: $(XPI_FILE)
 	$(ANDROID_LAUNCER) command chmod 755 /data
-	$(ANDROID_LAUNCER) mkdirs /data/local/talktome/content
-	$(ANDROID_LAUNCER) mkdirs /data/local/talktome/media
-	$(ADB) push $(RDF) /data/local/talktome
-	$(ADB) push bootstrap.js /data/local/talktome
-	for fname in $(CONTENT_SOURCES); do \
-		$(ADB) push $$fname /data/local/talktome/content; \
-	done
-	for fname in $(MEDIA_FILES); do \
-		$(ADB) push $$fname /data/local/talktome/media; \
-	done
+	$(ANDROID_LAUNCER) mkdirs /data/local/talktome
+	$(ADB) push $< /data/local/talktome
+	$(ANDROID_LAUNCER) command cd /data/local/talktome\; unzip \\-o $<
+	$(ANDROID_LAUNCER) command cd /data/local/talktome\; rm $<
 
 run-android: install-android
 	$(ANDROID_LAUNCER) kill
