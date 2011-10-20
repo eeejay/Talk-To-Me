@@ -24,7 +24,11 @@ try {
             let alias = Services.io.newURI(data.installPathString, null, null);
             resource.setSubstitution(data.extName, alias);
 
-            contentInit();
+            try {
+                contentInit ();
+            } catch (e) {
+                console.printException(e);
+            }
         }
     );
     sendAsyncMessage("TalkToMe:BootstrapMe");
