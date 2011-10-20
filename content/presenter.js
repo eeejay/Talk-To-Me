@@ -8,27 +8,33 @@ function Presenter(window, tts) {
     this.tts = tts;
     this.messageListeners = { 
         "TalkToMe:SpeakNav": Callback(function(aMessage) {
-            if (!aMessage.target.active) return;
+            let tab = this.window.BrowserApp.getTabForBrowser(aMessage.target);
+            if (!tab.active) return;
             this.speakNav(aMessage.json.phrase);
         } ,this),
         "TalkToMe:SpeakPoint": Callback(function(aMessage) {
-            if (!aMessage.target.active) return;
+            let tab = this.window.BrowserApp.getTabForBrowser(aMessage.target);
+            if (!tab.active) return;
             this.speakPoint(aMessage.json.phrase);
         } ,this),
         "TalkToMe:ShowBounds": Callback(function(aMessage) {
-            if (!aMessage.target.active) return;
+            let tab = this.window.BrowserApp.getTabForBrowser(aMessage.target);
+            if (!tab.active) return;
             this.showBounds(aMessage.json.bounds);
         } ,this),
         "TalkToMe:SpeakAppState":  Callback(function(aMessage) {
-            if (!aMessage.target.active) return;
+            let tab = this.window.BrowserApp.getTabForBrowser(aMessage.target);
+            if (!tab.active) return;
             this.speakAppState(aMessage.json.phrase);
         } ,this),
         "TalkToMe:Activated":  Callback(function(aMessage) {
-            if (!aMessage.target.active) return;
+            let tab = this.window.BrowserApp.getTabForBrowser(aMessage.target);
+            if (!tab.active) return;
             this.playActivate();
         } ,this),
         "TalkToMe:DeadEnd":  Callback(function(aMessage) {
-            if (!aMessage.target.active) return;
+            let tab = this.window.BrowserApp.getTabForBrowser(aMessage.target);
+            if (!tab.active) return;
             this.playThud();
         } ,this)
     };
@@ -82,22 +88,14 @@ function _Highlighter(window) {
     this.borderShadow = true;
 
     let document = window.document;
-    let stack = window.document.getElementById('stack');
 
-    this.highlightLayer = document.createElementNS(
-        "http://www.w3.org/1999/xhtml", "div");
-    this.highlightLayer.style.pointerEvents = "none";
-    this.highlightLayer.style.MozStackSizing = 'ignore';
-    this.highlightLayer.style.position = "relative";
-    stack.appendChild(this.highlightLayer);
-    
     this._highlightRect = document.createElementNS(
         "http://www.w3.org/1999/xhtml", "div");
-    this._highlightRect.style.position = "absolute";
+    this._highlightRect.style.position = "fixed";
     this._highlightRect.style.borderStyle = "solid";
     this._highlightRect.style.pointerEvents = "none";
     this._highlightRect.style.display = "none";
-    this.highlightLayer.appendChild(this._highlightRect);
+    document.firstChild.appendChild(this._highlightRect);
 
     // style it
     this._highlightRect.style.borderColor = this.borderColor;
@@ -123,17 +121,18 @@ function _Highlighter(window) {
     contentShowingObserver.addEventListener(
         "broadcast",
         Callback(function (e) {
-            console.log(this.highlightLayer.getAttribute("disabled") == "true");
-            if (this.highlightLayer.getAttribute("disabled") == "true")
+            console.log(this._highlightRect.getAttribute("disabled") == "true");
+            if (this._highlightRect.getAttribute("disabled") == "true")
                 this.hide ();
             else
                 this.show ();
         }, this));
-    this.highlightLayer.appendChild(contentShowingObserver)
+    this._highlightRect.appendChild(contentShowingObserver)
 
+    // JAVAUI REGRESSION
     // Hook in to relevant events
-    window.Browser.controlsScrollbox.addEventListener(
-        'scroll', Callback(this.askForBounds, this));
+    //window.Browser.controlsScrollbox.addEventListener(
+    //    'scroll', Callback(this.askForBounds, this));
     window.addEventListener('TabSelect', Callback(this.askForBounds, this));
     window.addEventListener('TabOpen', Callback(this.hide, this));
     window.addEventListener('NavigationPanelShown', Callback(this.hide, this));
@@ -151,7 +150,7 @@ _Highlighter.prototype.highlight = function (bounds) {
     
     if (clipping.top != 0 || clipping.left != 0 ||
         clipping.bottom != 0 || clipping.right != 0) {
-        let view = this.window.Browser.selectedTab.browser.getRootView();
+        let view = this.window.BrowserApp.selectedTab.browser.contentWindow;
         view.scrollBy(Math.round(clipping.left || clipping.right),
                       Math.round(clipping.top || clipping.bottom));
 
@@ -165,7 +164,7 @@ _Highlighter.prototype.highlight = function (bounds) {
 };
 
 _Highlighter.prototype._clip = function (rect) {
-    let bcr = this.window.Browser.selectedTab.browser.getBoundingClientRect();
+    let bcr = this.window.BrowserApp.selectedTab.browser.getBoundingClientRect();
 
     return {
         left: ((rect.left >= bcr.left) ? 0 : rect.left - bcr.left),
@@ -175,12 +174,21 @@ _Highlighter.prototype._clip = function (rect) {
     };
 };
 
+_Highlighter.prototype._transformBrowserToClient = function (browserX, browserY) {
+    let browser = this.window.BrowserApp.selectedTab.browser;
+    let contentWindow = browser.contentWindow;
+    let bcr = browser.getBoundingClientRect();
+    //console.dumpObj(browser.contentWindow);
+    return { x: (browserX - contentWindow.scrollX + bcr.left),
+             y: (browserY - contentWindow.scrollY + bcr.top)};
+
+}
+
 _Highlighter.prototype._transformContentRect = function (top, left, bottom, right) {
-    let t1 = this.window.Browser.selectedTab.browser.transformBrowserToClient(
-        left, top);
-    let t2 = this.window.Browser.selectedTab.browser.transformBrowserToClient(
-        right, bottom);
-    
+    // console.dumpObj(this.window.BrowserApp.selectedTab.browser.contentWindow);
+    let t1 = this._transformBrowserToClient(left, top);
+    let t2 = this._transformBrowserToClient(right, bottom);
+
     return { top: t1.y,
              left: t1.x,
              bottom: t2.y,
@@ -195,7 +203,8 @@ _Highlighter.prototype.show = function (rect) {
     this._highlightRect.style.display = "block";
 };
 
-_Highlighter.prototype._highlight = function (rect){    
+_Highlighter.prototype._highlight = function (rect){
+    console.log("highlight");
     this._highlightRect.style.display = "none";
     this._highlightRect.style.top = (rect.top - this.borderWidth/2) + "px";
     this._highlightRect.style.left = (rect.left - this.borderWidth/2) + "px";
@@ -207,7 +216,7 @@ _Highlighter.prototype._highlight = function (rect){
 };
 
 _Highlighter.prototype.askForBounds = function () {
-    let mm = this.window.Browser.selectedTab.browser.messageManager;
+    let mm = this.window.BrowserApp.selectedTab.browser.messageManager;
     mm.sendAsyncMessage("TalkToMe:CurrentBounds");
 };
 
@@ -217,5 +226,5 @@ _Highlighter.prototype.showBoundsHandler = function (aMessage) {
 
 _Highlighter.prototype.remove = function () {
     console.log("Removing highlighter");
-    this.highlightLayer.parentNode.removeChild(this.highlightLayer);
+    this._highlightRect.parentNode.removeChild(this._highlightRect);
 };
