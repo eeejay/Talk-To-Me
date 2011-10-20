@@ -5,8 +5,6 @@ EXPORTED_SYMBOLS = ["Navigator"];
 function Navigator(window, presenter) {
     this.window = window;
     this.presenter = presenter;
-
-    this._horizontalChrome = new _HorizontalChrome (window);
 }
 
 Navigator.prototype = {
@@ -29,10 +27,8 @@ Navigator.prototype = {
         this._message("Navigate", { x: x, y: y });
     },
     chromeLeft: function chromeLeft () {
-        this._horizontalChrome.left();
     },
     chromeRight: function chromeRight () {
-        this._horizontalChrome.right();
     },
     chromeTop: function chromeTop () {
     },
@@ -51,30 +47,7 @@ Navigator.prototype = {
         throw new Error("not implemented");
     },
     _message: function _navigate (message, details) {
-        let mm = this.window.Browser.selectedTab.browser.messageManager;
+        let mm = this.window.BrowserApp.selectedTab.browser.messageManager;
         mm.sendAsyncMessage("TalkToMe:" + message, details);
     }
 };
-
-function _HorizontalChrome (window) {
-    let document = window.document;
-    this.window = window;
-
-    this._elements = [document.getElementById('controls-sidebar'),
-                      document.getElementById('page-stack'),
-                      document.getElementById('tabs-sidebar')];
-    this._current = 1;
-}
-
-_HorizontalChrome.prototype = {
-    left: function left () {
-        this._current = Math.max(0, --this._current);
-        this.window.Browser.controlsScrollboxScroller
-            .ensureElementIsVisible(this._elements[this._current]);
-    },
-    right: function right () {
-        this._current = Math.min(this._elements.length - 1, ++this._current);
-        this.window.Browser.controlsScrollboxScroller
-            .ensureElementIsVisible(this._elements[this._current]);
-    }
-}
